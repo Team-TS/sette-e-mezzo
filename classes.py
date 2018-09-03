@@ -7,7 +7,7 @@ class Card:
 		self.suit  = suit
 		self.value = value
 		self.name  = name
-		self.img   = pygame.image.load(code + ".png")
+		self.img   = pygame.image.load("images/" + code + ".png")
 		self.drawn = False
 
 #class Button:

@@ -25,14 +25,14 @@ WindowHeight     =  500
 GameSpeed        =  20
 FPS              =  pygame.time.Clock()
 DisplaySurf      =  pygame.display.set_mode((WindowWidth,WindowHeight))
-StdFont          =  pygame.font.Font("Archivo-SemiBold.ttf",20)  
+StdFont          =  pygame.font.Font("fonts/Archivo-SemiBold.ttf",20)  
 Values           =  [i.split(",") for i in open("values.txt").read().split("\n")]
 Cards            =  {i[0] : Card(i[0],i[1],i[2],i[3]) for i in Values}
 CardNameLoc      =  (5,5)
 DeckInfoLoc      =  (300,300)
 ScoreLoc         =  (100,300)
-deck             =  pygame.image.load("deck.jpg")
-icon             =  pygame.image.load("icon.png")
+deck             =  pygame.image.load("images/deck.jpg")
+icon             =  pygame.image.load("images/icon.png")
 
 pygame.display.set_icon(icon)
 
