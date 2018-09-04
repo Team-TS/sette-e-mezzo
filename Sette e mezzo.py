@@ -31,7 +31,6 @@ Cards            =  {i[0] : Card(i[0],i[1],i[2],i[3]) for i in Values}
 CardNameLoc      =  (5,5)
 DeckInfoLoc      =  (300,300)
 ScoreLoc         =  (100,300)
-deck             =  pygame.image.load("images/deck.jpg")
 icon             =  pygame.image.load("images/icon.png")
 
 pygame.display.set_icon(icon)
@@ -39,12 +38,12 @@ pygame.display.set_icon(icon)
 # throwaways (lowercase)
 deal = True
 hand = []
+available = Deck()
 
 # Game loop
 while True:
 
         # available cards 
-        available = [code for code in Cards if not Cards[code].drawn == True]
     
         # User input
         for event in pygame.event.get():
@@ -60,18 +59,18 @@ while True:
         
         # deal a new card
         if deal == True and available:
-                newcard = random.choice(available)
+                newcard = random.choice(available.cards)
                 hand.append(newcard)
-                Cards[newcard].drawn = True
+                available.cards.remove(newcard)
                 deal = False
         
         # keep score
-        score = sum([float(Cards[code].value) for code in hand])
+        score = sum([float(card.value) for card in hand])
 
         # --print the cards info to the display surface--
 
         # latest card name and value
-        DisplaySurf.blit(StdFont.render(Cards[newcard].name + "  " + Cards[newcard].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
+        DisplaySurf.blit(StdFont.render(hand[0].name + "  " + hand[0].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
 
         # score
         if score <= 7.5:
@@ -81,15 +80,17 @@ while True:
 
         DisplaySurf.blit(StdFont.render("Score = " + str(score),True, scorecolor),pygame.Rect(ScoreLoc,(1,1)))
 
+        tmp_count = 1
         # cards and codes
-        for count, code in enumerate(hand):
-                DisplaySurf.blit(Cards[code].img,pygame.Rect((60*count),50,60,110))
-                DisplaySurf.blit(StdFont.render(code,True,scorecolor,GRAY),pygame.Rect((18 + 60*count),160,1,1))
+        for card in hand:
+                DisplaySurf.blit(card.img,pygame.Rect((60*tmp_count),50,60,110))
+                DisplaySurf.blit(StdFont.render(card.code,True,scorecolor,GRAY),pygame.Rect((18 + 60*tmp_count),160,1,1))
+                tmp_count = tmp_count + 1
 
         
         # remaining deck
-        DisplaySurf.blit(deck,pygame.Rect(DeckInfoLoc,(1,1)))
-        DisplaySurf.blit(StdFont.render("Remaining deck = " + str(len(available)),True,BLACK),pygame.Rect(DeckInfoLoc,(1,1)))
+        DisplaySurf.blit(available.img,pygame.Rect(DeckInfoLoc,(1,1)))
+        DisplaySurf.blit(StdFont.render("Remaining deck = " + str(len(available.cards)),True,BLACK),pygame.Rect(DeckInfoLoc,(1,1)))
 
         
         
