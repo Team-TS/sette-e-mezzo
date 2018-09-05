@@ -2,8 +2,6 @@ import random, pygame, sys
 from pygame.locals import *
 from classes import *
 
-pygame.init()
-pygame.display.set_caption("Sette e Mezzo")
 
 # Colour variables (UPPERCASE)
 #            R    G    B
@@ -20,24 +18,24 @@ CYAN     = (  0, 255, 255)
 BLACK    = (  0,   0,   0)
 
 # constants (CamelCase)
+Name             =  "Sette e mezzo"
 WindowWidth      =  800
 WindowHeight     =  500
 GameSpeed        =  20
-FPS              =  pygame.time.Clock()
-DisplaySurf      =  pygame.display.set_mode((WindowWidth,WindowHeight))
-StdFont          =  pygame.font.Font("fonts/Archivo-SemiBold.ttf",20)  
+Game             =  Initiate(Name,WindowWidth,WindowHeight)
+StdFont          =  "Archivo-SemiBold"  
 Values           =  [i.split(",") for i in open("values.txt").read().split("\n")]
 Cards            =  {i[0] : Card(i[0],i[1],i[2],i[3]) for i in Values}
-CardNameLoc      =  (5,5)
-DeckInfoLoc      =  (300,300)
-ScoreLoc         =  (100,300)
-icon             =  pygame.image.load("images/icon.png")
+CardNames        =  Text((5,5),StdFont,20)
+DeckInfo         =  Text((300,300),StdFont,20)
+ScoreInfo        =  Text((100,300),StdFont,20)
 
-pygame.display.set_icon(icon)
+
+
 
 # throwaways (lowercase)
 deal = True
-hand = Deck("Your hand", False)
+hand = Deck("Your hand", forge = False)
 available = []
 
 # Game loop
@@ -48,19 +46,19 @@ while True:
                 available = Deck("Dealer")
     
         # User input
-        for event in pygame.event.get():
+        for event in Game.events():
                 if event.type == QUIT:
-                        pygame.quit()
+                        Game.quit()
                         sys.exit()
                 if event.type == KEYDOWN:
                         if event.key == K_SPACE:
                                 deal = True
                         
         # white background               
-        DisplaySurf.fill(WHITE)
+        Game.display.fill(WHITE)
         
         # deal a new card
-        if deal == True and available:
+        if deal == True and len(available.cards):
                 newcard = available.draw_card()
                 hand.cards.append(newcard)
                 deal = False
@@ -71,7 +69,8 @@ while True:
         # --print the cards info to the display surface--
 
         # latest card name and value
-        DisplaySurf.blit(StdFont.render(hand.cards[len(hand) - 1].name + "  " + hand.cards[len(hand) - 1].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
+        if len(hand.cards):
+                Game.vistext(CardNames,hand.cards[-1].name + " " + hand.cards[-1].value,BLACK)
 
         # score
         if score <= 7.5:
@@ -79,25 +78,20 @@ while True:
         else:
                 scorecolor = RED
 
-        DisplaySurf.blit(StdFont.render("Score = " + str(score),True, scorecolor),pygame.Rect(ScoreLoc,(1,1)))
+        Game.vistext(ScoreInfo,"Score: " + str(score), scorecolor)
 
-        tmp_count = 1
+        tmp_count = 0
         # cards and codes
         for card in hand.cards:
-                DisplaySurf.blit(card.img,pygame.Rect((60*tmp_count),50,60,110))
-                DisplaySurf.blit(StdFont.render(card.code,True,scorecolor,GRAY),pygame.Rect((18 + 60*tmp_count),160,1,1))
+                Game.vissurf(card.img,((60*tmp_count),50))
+                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
                 tmp_count = tmp_count + 1
 
         
         # remaining deck
-        DisplaySurf.blit(available.img,pygame.Rect(DeckInfoLoc,(1,1)))
-        DisplaySurf.blit(StdFont.render("Remaining deck = " + str(len(available.cards)),True,BLACK),pygame.Rect(DeckInfoLoc,(1,1)))
+        Game.vissurf(available.img, DeckInfo.pos)
+        Game.vistext(DeckInfo,"Remaining deck = " + str(len(available.cards)), BLACK)
 
-        
-        
-        # game speed
-        FPS.tick(GameSpeed)
-
-        # update screen
-        pygame.display.update()
+        # process game tik
+        Game.update(GameSpeed)
 
