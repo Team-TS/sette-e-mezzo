@@ -13,13 +13,15 @@ class Card:
 #class Button:
 
 class Deck:
-	name = "Deck"
+	name = ""
 	cards = []
 	img = pygame.image.load("images/deck.jpg")
 
-	def __init__(self, forge = True):
+	def __init__(self, name = "Deck", forge = True):
 		if forge:
 			self.forge_cards()
+		if name:
+			self.name = name
 
 	def forge_cards(self):
 		file_read = [i.split(",") for i in open("values.txt").read().split("\n")]

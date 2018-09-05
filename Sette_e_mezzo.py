@@ -37,7 +37,7 @@ pygame.display.set_icon(icon)
 
 # throwaways (lowercase)
 deal = True
-hand = []
+hand = Deck("Your hand", False)
 available = []
 
 # Game loop
@@ -45,7 +45,7 @@ while True:
 
         # available cards 
         if not available:
-                available = Deck()
+                available = Deck("Dealer")
     
         # User input
         for event in pygame.event.get():
@@ -62,16 +62,16 @@ while True:
         # deal a new card
         if deal == True and available:
                 newcard = available.draw_card()
-                hand.append(newcard)
+                hand.cards.append(newcard)
                 deal = False
         
         # keep score
-        score = sum([float(card.value) for card in hand])
+        score = sum([float(card.value) for card in hand.cards])
 
         # --print the cards info to the display surface--
 
         # latest card name and value
-        DisplaySurf.blit(StdFont.render(hand[len(hand) - 1].name + "  " + hand[len(hand) - 1].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
+        DisplaySurf.blit(StdFont.render(hand.cards[len(hand) - 1].name + "  " + hand.cards[len(hand) - 1].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
 
         # score
         if score <= 7.5:
@@ -83,7 +83,7 @@ while True:
 
         tmp_count = 1
         # cards and codes
-        for card in hand:
+        for card in hand.cards:
                 DisplaySurf.blit(card.img,pygame.Rect((60*tmp_count),50,60,110))
                 DisplaySurf.blit(StdFont.render(card.code,True,scorecolor,GRAY),pygame.Rect((18 + 60*tmp_count),160,1,1))
                 tmp_count = tmp_count + 1
