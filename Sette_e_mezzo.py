@@ -37,7 +37,7 @@ pygame.display.set_icon(icon)
 
 # throwaways (lowercase)
 deal = True
-hand = Deck("Your hand", False)
+hand = Deck("Your hand", forge = False)
 available = []
 
 # Game loop
@@ -55,6 +55,7 @@ while True:
                 if event.type == KEYDOWN:
                         if event.key == K_SPACE:
                                 deal = True
+
                         
         # white background               
         DisplaySurf.fill(WHITE)
@@ -71,7 +72,8 @@ while True:
         # --print the cards info to the display surface--
 
         # latest card name and value
-        DisplaySurf.blit(StdFont.render(hand.cards[len(hand) - 1].name + "  " + hand.cards[len(hand) - 1].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
+        if len(hand.cards):
+                DisplaySurf.blit(StdFont.render(hand.cards[len(hand.cards) - 1].name + "  " + hand.cards[len(hand.cards) - 1].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
 
         # score
         if score <= 7.5:
@@ -86,7 +88,6 @@ while True:
         for card in hand.cards:
                 DisplaySurf.blit(card.img,pygame.Rect((60*tmp_count),50,60,110))
                 DisplaySurf.blit(StdFont.render(card.code,True,scorecolor,GRAY),pygame.Rect((18 + 60*tmp_count),160,1,1))
-                tmp_count = tmp_count + 1
 
         
         # remaining deck
