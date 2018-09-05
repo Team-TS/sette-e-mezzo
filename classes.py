@@ -45,6 +45,7 @@ class Card:
 #class Button:
 
 class Deck:
+<<<<<<< HEAD
 	
 	img = pygame.image.load("images/deck.jpg")
 
@@ -53,10 +54,20 @@ class Deck:
 		self.name = ""
 		self.cards = []
 
+=======
+	img = pygame.image.load("images/deck.jpg")
+
+	def __init__(self, name = "Deck", forge = True):
+		self.name = ""
+		self.cards = []
+>>>>>>> 02ffa61690f53e0b691b57b33280ab17ff9d10b0
 		if forge:
+			print("Forging cards {0}".format(self.name))
 			self.forge_cards()
 		if name:
 			self.name = name
+		
+		print("Initialized new Deck ({0})with cards: ({1})".format(self.name, len(self.cards)))
 
 	def forge_cards(self):
 		file_read = [i.split(",") for i in open("values.txt").read().split("\n")]
