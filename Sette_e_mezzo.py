@@ -88,6 +88,7 @@ while True:
         for card in hand.cards:
                 DisplaySurf.blit(card.img,pygame.Rect((60*tmp_count),50,60,110))
                 DisplaySurf.blit(StdFont.render(card.code,True,scorecolor,GRAY),pygame.Rect((18 + 60*tmp_count),160,1,1))
+                tmp_count = tmp_count + 1
 
         
         # remaining deck
