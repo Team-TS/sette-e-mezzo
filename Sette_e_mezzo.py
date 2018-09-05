@@ -38,12 +38,14 @@ pygame.display.set_icon(icon)
 # throwaways (lowercase)
 deal = True
 hand = []
-available = Deck()
+available = []
 
 # Game loop
 while True:
 
         # available cards 
+        if not available:
+                available = Deck()
     
         # User input
         for event in pygame.event.get():
@@ -59,9 +61,8 @@ while True:
         
         # deal a new card
         if deal == True and available:
-                newcard = random.choice(available.cards)
+                newcard = available.draw_card()
                 hand.append(newcard)
-                available.cards.remove(newcard)
                 deal = False
         
         # keep score
@@ -70,7 +71,7 @@ while True:
         # --print the cards info to the display surface--
 
         # latest card name and value
-        DisplaySurf.blit(StdFont.render(hand[0].name + "  " + hand[0].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
+        DisplaySurf.blit(StdFont.render(hand[len(hand) - 1].name + "  " + hand[len(hand) - 1].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
 
         # score
         if score <= 7.5:
