@@ -71,11 +71,8 @@ while True:
 
         # latest card name and value
         if len(hand.cards):
-<<<<<<< HEAD
                 Game.vistext(CardNames,hand.cards[-1].name + " " + hand.cards[-1].value,BLACK)
-=======
-                DisplaySurf.blit(StdFont.render(hand.cards[len(hand.cards) - 1].name + "  " + hand.cards[len(hand.cards) - 1].value,True,BLACK),pygame.Rect(CardNameLoc,(1,1)))
->>>>>>> 02ffa61690f53e0b691b57b33280ab17ff9d10b0
+
 
         # score
         if score <= 7.5:
