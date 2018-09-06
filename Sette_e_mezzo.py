@@ -24,11 +24,9 @@ WindowHeight     =  500
 GameSpeed        =  20
 Game             =  Initiate(Name,WindowWidth,WindowHeight)
 StdFont          =  "Archivo-SemiBold"  
-Values           =  [i.split(",") for i in open("values.txt").read().split("\n")]
-Cards            =  {i[0] : Card(i[0],i[1],i[2],i[3]) for i in Values}
-CardNames        =  Text((5,5),StdFont,20)
-DeckInfo         =  Text((300,300),StdFont,20)
-ScoreInfo        =  Text((100,300),StdFont,20)
+CardNames        =  Text((5,5),StdFont,20,BLACK)
+DeckInfo         =  Text((300,300),StdFont,20,BLACK)
+ScoreInfo        =  Text((100,300),StdFont,20,GREEN)
 
 
 
@@ -71,7 +69,7 @@ while True:
 
         # latest card name and value
         if len(hand.cards):
-                Game.vistext(CardNames,hand.cards[-1].name + " " + hand.cards[-1].value,BLACK)
+                Game.vistext(CardNames,hand.cards[-1].name + " " + hand.cards[-1].value)
 
 
         # score
@@ -86,13 +84,13 @@ while True:
         # cards and codes
         for card in hand.cards:
                 Game.vissurf(card.img,((60*tmp_count),50))
-                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
+                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,scorecolor,GRAY),card.code)
                 tmp_count = tmp_count + 1
 
         
         # remaining deck
         Game.vissurf(available.img, DeckInfo.pos)
-        Game.vistext(DeckInfo,"Remaining deck = " + str(len(available.cards)), BLACK)
+        Game.vistext(DeckInfo,"Remaining deck = " + str(len(available.cards)))
 
         # process game tik
         Game.update(GameSpeed)

@@ -21,8 +21,12 @@ class Initiate:
 		self.fps.tick(speed)
 		pygame.display.update()
 
-	def vistext(self,TextObj,txt,color):
-		surface          = TextObj.font.render(str(txt),True,color,TextObj.background)
+	def vistext(self,TextObj,txt,colour = False):
+		if not colour:
+			surface = TextObj.font.render(str(txt),True,TextObj.colour,TextObj.background)
+		else:
+			surface = TextObj.font.render(str(txt),True,colour,TextObj.background)
+
 		position         = surface.get_rect()
 		position.topleft = TextObj.pos
 		self.display.blit(surface,position)
@@ -84,10 +88,11 @@ class Deck:
 
 class Text:
 	
-	def __init__(self,pos,font,size,background = False):
+	def __init__(self,pos,font,size,colour,background = False):
 		self.background = background
 		self.pos  = pos
 		self.font = pygame.font.Font("fonts/" + font + ".ttf",size)
+		self.colour = colour
 	
 
 	
