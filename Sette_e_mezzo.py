@@ -21,14 +21,13 @@ BLACK    = (  0,   0,   0)
 Name             =  "Sette e mezzo"
 WindowWidth      =  800
 WindowHeight     =  500
-GameSpeed        =  20
+GameSpeed        =  60
 Game             =  Initiate(Name,WindowWidth,WindowHeight)
 StdFont          =  "Archivo-SemiBold"  
-Values           =  [i.split(",") for i in open("values.txt").read().split("\n")]
-Cards            =  {i[0] : Card(i[0],i[1],i[2],i[3]) for i in Values}
-CardNames        =  Text((5,5),StdFont,20)
-DeckInfo         =  Text((300,300),StdFont,20)
-ScoreInfo        =  Text((100,300),StdFont,20)
+CardText         =  Text((5,5),StdFont,20,BLACK)
+DeckText         =  Text((300,300),StdFont,20,BLACK)
+ScoreText        =  Text((100,300),StdFont,20,GREEN)
+DealButton       =  Button((400,250),StdFont,30,RED,"Deal",CYAN,PURPLE)
 
 
 
@@ -50,19 +49,16 @@ while True:
                 if event.type == QUIT:
                         Game.quit()
                         sys.exit()
-                if event.type == KEYDOWN:
-                        if event.key == K_SPACE:
-                                deal = True
+                if DealButton.check(event) == True:
+                        if len(available.cards):
+                                newcard = available.draw_card()
+                                hand.cards.append(newcard)
 
-                        
+
+
+                      
         # white background               
         Game.display.fill(WHITE)
-        
-        # deal a new card
-        if deal == True and len(available.cards):
-                newcard = available.draw_card()
-                hand.cards.append(newcard)
-                deal = False
         
         # keep score
         score = sum([float(card.value) for card in hand.cards])
@@ -71,7 +67,7 @@ while True:
 
         # latest card name and value
         if len(hand.cards):
-                Game.vistext(CardNames,hand.cards[-1].name + " " + hand.cards[-1].value,BLACK)
+                Game.vistext(CardText,hand.cards[-1].name + " " + hand.cards[-1].value)
 
 
         # score
@@ -80,19 +76,22 @@ while True:
         else:
                 scorecolor = RED
 
-        Game.vistext(ScoreInfo,"Score: " + str(score), scorecolor)
+        Game.vistext(ScoreText,"Score: " + str(score), scorecolor)
 
         tmp_count = 0
         # cards and codes
         for card in hand.cards:
                 Game.vissurf(card.img,((60*tmp_count),50))
-                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
+                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,scorecolor,GRAY),card.code)
                 tmp_count = tmp_count + 1
 
         
         # remaining deck
-        Game.vissurf(available.img, DeckInfo.pos)
-        Game.vistext(DeckInfo,"Remaining deck = " + str(len(available.cards)), BLACK)
+        Game.vissurf(available.img, DeckText.xy)
+        Game.vistext(DeckText,"Remaining deck = " + str(len(available.cards)))
+
+        # Buttons
+        Game.vissurf(DealButton.surface,DealButton.position.topleft)
 
         # process game tik
         Game.update(GameSpeed)
