@@ -1,6 +1,7 @@
 import random, pygame, sys 
 from pygame.locals import *
 from classes import *
+from time import sleep
 
 
 # Colour variables (UPPERCASE)
@@ -31,68 +32,79 @@ DeckInfo         =  Text((300,300),StdFont,20)
 ScoreInfo        =  Text((100,300),StdFont,20)
 
 
-
-
 # throwaways (lowercase)
 deal = True
-hand = Deck("Your hand", forge = False)
-available = []
+gamestate = None
+my_player = None
 
 # Game loop
 while True:
 
-        # available cards 
-        if not available:
-                available = Deck("Dealer")
+        if not gamestate:
+                #Need a menu here really.
+                player = Player("Me")
+                my_player = player
+                gamestate = GameState(player)
     
         # User input
         for event in Game.events():
                 if event.type == QUIT:
                         Game.quit()
                         sys.exit()
-                if event.type == KEYDOWN:
+                if event.type == KEYDOWN and gamestate and gamestate.isrunning:
                         if event.key == K_SPACE:
-                                deal = True
+                                gamestate.dealCards()
 
                         
         # white background               
         Game.display.fill(WHITE)
-        
-        # deal a new card
-        if deal == True and len(available.cards):
-                newcard = available.draw_card()
-                hand.cards.append(newcard)
-                deal = False
-        
-        # keep score
-        score = sum([float(card.value) for card in hand.cards])
-
+                
         # --print the cards info to the display surface--
 
         # latest card name and value
-        if len(hand.cards):
-                Game.vistext(CardNames,hand.cards[-1].name + " " + hand.cards[-1].value,BLACK)
+        if my_player and len(my_player.deck.cards):
+                Game.vistext(CardNames,my_player.deck.cards[-1].name + " " + my_player.deck.cards[-1].value,BLACK)
 
 
         # score
-        if score <= 7.5:
-                scorecolor = GREEN
-        else:
-                scorecolor = RED
+        if my_player:
+                if my_player.score <= 7.5:
+                        scorecolor = GREEN
+                else:
+                        scorecolor = RED
 
-        Game.vistext(ScoreInfo,"Score: " + str(score), scorecolor)
+                Game.vistext(ScoreInfo,"Score: " + str(my_player.score if my_player else 0), scorecolor)
+                if my_player.score > 7.5:
+                        Game.vistext(Text((250,300),StdFont,20),"You lost! Score over 7.5!", scorecolor)
+                        tmp_count = 0
+                        for card in my_player.deck.cards:
+                                Game.vissurf(card.img,((60*tmp_count),50))
+                                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
+                                tmp_count = tmp_count + 1
+                        
 
         tmp_count = 0
         # cards and codes
-        for card in hand.cards:
-                Game.vissurf(card.img,((60*tmp_count),50))
-                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
-                tmp_count = tmp_count + 1
+        if gamestate and gamestate.isrunning:
+                if my_player:
+                        for card in my_player.deck.cards:
+                                Game.vissurf(card.img,((60*tmp_count),50))
+                                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
+                                tmp_count = tmp_count + 1
 
-        
-        # remaining deck
-        Game.vissurf(available.img, DeckInfo.pos)
-        Game.vistext(DeckInfo,"Remaining deck = " + str(len(available.cards)), BLACK)
+
+                # remaining deck
+                if my_player:
+                        Game.vissurf(gamestate.dealer.deck.img, DeckInfo.pos)
+                        Game.vistext(DeckInfo,"Remaining deck = " + str(len(gamestate.dealer.deck.cards)), BLACK)
+
+                        
+                        # keep score
+                        gamestate.updateScore()
+                        if my_player and my_player.score > 7.5:
+                                print("Score over 7.5, ending game!")
+                                gamestate.endGame()
+
 
         # process game tik
         Game.update(GameSpeed)
