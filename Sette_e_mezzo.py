@@ -32,7 +32,6 @@ DealButton       =  Button((400,250),StdFont,30,RED,"Deal",CYAN,PURPLE)
 
 
 # throwaways (lowercase)
-deal = True
 gamestate = None
 my_player = None
 
@@ -65,7 +64,7 @@ while True:
 
         # latest card name and value
         if my_player and len(my_player.deck.cards):
-                Game.vistext(CardNames,my_player.deck.cards[-1].name + " " + my_player.deck.cards[-1].value,BLACK)
+                Game.vistext(CardText,my_player.deck.cards[-1].name + " " + my_player.deck.cards[-1].value,BLACK)
 
 
         # score
@@ -75,13 +74,13 @@ while True:
                 else:
                         scorecolor = RED
 
-                Game.vistext(ScoreInfo,"Score: " + str(my_player.score if my_player else 0), scorecolor)
+                Game.vistext(ScoreText,"Score: " + str(my_player.score if my_player else 0), scorecolor)
                 if my_player.score > 7.5:
-                        Game.vistext(Text((250,300),StdFont,20),"You lost! Score over 7.5!", scorecolor)
+                        Game.vistext(Text((250,300),StdFont,20,scorecolor),"You lost! Score over 7.5!",)
                         tmp_count = 0
                         for card in my_player.deck.cards:
                                 Game.vissurf(card.img,((60*tmp_count),50))
-                                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
+                                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,scorecolor,GRAY),card.code)
                                 tmp_count = tmp_count + 1
                         
 
@@ -91,14 +90,14 @@ while True:
                 if my_player:
                         for card in my_player.deck.cards:
                                 Game.vissurf(card.img,((60*tmp_count),50))
-                                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,GRAY),card.code,scorecolor)
+                                Game.vistext(Text(((18 + 60*tmp_count),160),StdFont,20,scorecolor,GRAY),card.code)
                                 tmp_count = tmp_count + 1
 
 
                 # remaining deck
                 if my_player:
-                        Game.vissurf(gamestate.dealer.deck.img, DeckInfo.pos)
-                        Game.vistext(DeckInfo,"Remaining deck = " + str(len(gamestate.dealer.deck.cards)), BLACK)
+                        Game.vissurf(gamestate.dealer.deck.img, DeckText.xy)
+                        Game.vistext(DeckText,"Remaining deck = " + str(len(gamestate.dealer.deck.cards)), BLACK)
 
                         
                         # keep score
@@ -106,6 +105,10 @@ while True:
                         if my_player and my_player.score > 7.5:
                                 print("Score over 7.5, ending game!")
                                 gamestate.endGame()
+
+
+        # Buttons
+        Game.vissurf(DealButton.surface,DealButton.position.topleft)
 
 
         # process game tik
