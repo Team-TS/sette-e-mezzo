@@ -22,14 +22,13 @@ BLACK    = (  0,   0,   0)
 Name             =  "Sette e mezzo"
 WindowWidth      =  800
 WindowHeight     =  500
-GameSpeed        =  20
+GameSpeed        =  60
 Game             =  Initiate(Name,WindowWidth,WindowHeight)
 StdFont          =  "Archivo-SemiBold"  
-Values           =  [i.split(",") for i in open("values.txt").read().split("\n")]
-Cards            =  {i[0] : Card(i[0],i[1],i[2],i[3]) for i in Values}
-CardNames        =  Text((5,5),StdFont,20)
-DeckInfo         =  Text((300,300),StdFont,20)
-ScoreInfo        =  Text((100,300),StdFont,20)
+CardText         =  Text((5,5),StdFont,20,BLACK)
+DeckText         =  Text((300,300),StdFont,20,BLACK)
+ScoreText        =  Text((100,300),StdFont,20,GREEN)
+DealButton       =  Button((400,250),StdFont,30,RED,"Deal",CYAN,PURPLE)
 
 
 # throwaways (lowercase)
@@ -51,13 +50,16 @@ while True:
                 if event.type == QUIT:
                         Game.quit()
                         sys.exit()
-                if event.type == KEYDOWN and gamestate and gamestate.isrunning:
-                        if event.key == K_SPACE:
-                                gamestate.dealCards()
+                if DealButton.check(event) == True and gamestate and gamestate.isrunning:
+                        gamestate.dealCards()
 
-                        
+
+
+
+                      
         # white background               
         Game.display.fill(WHITE)
+
                 
         # --print the cards info to the display surface--
 
