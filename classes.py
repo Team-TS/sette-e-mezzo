@@ -4,6 +4,7 @@ from probability import prob
 from random import choice
 
 class Initiate:
+	""" Class for handelling pygame init() and other pygame modules"""
 
 	def __init__(self,name,w,h):
 		pygame.init()
@@ -13,12 +14,15 @@ class Initiate:
 		self.fps     = pygame.time.Clock()
 
 	def events(self):
+		"""returns a list of pygame events"""
 		return pygame.event.get()
 
 	def quit(self):
+		"""Closes the application"""
 		pygame.quit()
 
 	def vistext(self,TextObj,txt,colour = False):
+		"""Renders given text to screen using preferences stored in a Text object"""
 		if not colour:
 			surface = TextObj.font.render(str(txt),True,TextObj.colour,TextObj.background)
 		else:
@@ -29,11 +33,18 @@ class Initiate:
 		self.display.blit(surface,position)
 
 	def vissurf(self,surface,xy):
+		"""Renders the given pygame surface to the screen at given xy co-ordinate"""
 		position         = surface.get_rect()
 		position.topleft = xy
 		self.display.blit(surface,position)
 
+	def visbutton(self,button):
+		"""Renders an interactive Button object"""
+		if button.state == True:
+			self.display.blit(button.surface,button.position)
+
 	def update(self,speed):
+		"""Updates screen"""
 		self.fps.tick(speed)
 		pygame.display.update()
 
@@ -44,7 +55,7 @@ class GameState:
 
 	def __init__(self, players):
 		self.players = [players]
-		self.isrunning = True
+		self.isrunning = False
 		self.dealer = None
 		if len(self.players) < 2:
 			""" We can't play alone"""
@@ -73,6 +84,10 @@ class GameState:
 		if not self.dealer:
 			print("No dealer present")
 			return False
+
+		if not len(self.dealer.deck.cards): # temporary solution 
+			self.endGame(True)
+			print("Out of cards, reseting deck")
 		
 		for player in self.players:
 			dealtcard = self.dealer.deck.draw_card()
@@ -84,9 +99,21 @@ class GameState:
 		for player in self.players:
 			player.updateScore()
 
-	def endGame(self):
-		"""Ends the game"""
+	def startGame(self):
+		"""Starts the game"""
+		self.isrunning = True
+
+	def endGame(self, resetdealer = False):
+		"""Ends the game and resets non dealer players"""
+		for player in self.players:
+			player.resetPlayer()
+
+		if resetdealer:
+			self.dealer.resetPlayer()
+
 		self.isrunning = False
+
+
 
 
 
@@ -109,14 +136,29 @@ class Player:
 		self.score = self.score + adj
 	
 	def receiveCard(self, card):
+		"""adds the given card to the players deck"""
 		self.deck.addCard(card)
 		return True
 
 	def updateScore(self):
-		self.score = sum([float(card.value) for card in self.deck.cards])
+		"""calculates the player score based on cards in their deck(hand)"""
+		if not self.isdealer:
+			self.score = sum([float(card.value) for card in self.deck.cards])
+		else:
+			print("Dealer cannot have a score")
+			return False
+
+	def resetPlayer(self):
+		"""resets a players score and deck"""
+		if not self.isdealer:
+			self.deck = Deck("My Deck", False)
+		else:
+			self.deck = Deck("Dealer's deck")
+
 
 
 class Card:
+	"""Basic class for storing card attributes"""
 
 	def __init__(self,code,suit,value,name):
 		self.code  = code
@@ -127,7 +169,7 @@ class Card:
 
 
 class Deck:
-	
+	"""Class for loading managing and manipulating a list of Card objects"""
 	img = pygame.image.load("images/deck.jpg")
 
 	def __init__(self, name = "Deck", forge = True, shuffle = True):
@@ -174,36 +216,42 @@ class Deck:
 
 
 class Text:
+	"""Basic class for storing text values such as location font and colour"""
 	
 	def __init__(self,xy,font,size,colour,background = False):
 		self.background = background
 		self.xy         = xy
-		self.font       = pygame.font.Font("fonts/" + font + ".ttf",size)
 		self.colour     = colour
+		self.font       = pygame.font.Font("fonts/" + font + ".ttf",size)
+		
 	
 
 class Button(Text):
+	"""Extrapolation on the Text class which facilitates user input"""
 
 	def __init__(self,xy,font,size,colour,txt,background,hover):
 		Text.__init__(self,xy,font,size,colour,background)
 		self.hover            = hover
 		self.txt              = txt
-		self.state            = 0
+		self.state            = True
 		self.surface          = self.font.render(str(self.txt),True,self.colour,self.background)
 		self.position         = self.surface.get_rect()
 		self.position.topleft = self.xy
 
 	def check(self,event):
+		"""Returns True for a mouse click on the button"""
 
-		if event.type == MOUSEBUTTONUP:
-			if self.position.collidepoint(event.pos):
-				return True
-	          
-		if event.type == MOUSEMOTION or event.type == MOUSEBUTTONDOWN:
-			if self.position.collidepoint(event.pos):
-				self.surface = self.surface = self.font.render(str(self.txt),True,self.colour,self.hover)
-			else:
-				self.surface = self.font.render(str(self.txt),True,self.colour,self.background)
+		if self.state:
+
+			if event.type == MOUSEBUTTONUP:
+				if self.position.collidepoint(event.pos):
+					return True
+		          
+			if event.type == MOUSEMOTION or event.type == MOUSEBUTTONDOWN:
+				if self.position.collidepoint(event.pos):
+					self.surface = self.surface = self.font.render(str(self.txt),True,self.colour,self.hover)
+				else:
+					self.surface = self.font.render(str(self.txt),True,self.colour,self.background)
 
       
 
