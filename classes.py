@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from probability import prob
+import probability
 from random import choice
 
 class Initiate:
@@ -54,9 +54,11 @@ class GameState:
 	name = "GameState"
 
 	def __init__(self, players):
-		self.players = [players]
+		self.players = players
 		self.isrunning = False
 		self.dealer = None
+		self.waitforplayer = False
+		self.tick = 0
 		if len(self.players) < 2:
 			""" We can't play alone"""
 			enemy = Player(choice(["Mark", "Emily", "Steve", "Amy"]), True)
@@ -64,10 +66,35 @@ class GameState:
 		else:
 			dealer = choice(players)
 			self.dealer = dealer
+			dealer.deck = Deck("Dealer's Deck")
+			dealer.isdealer = True
+
+	def fire(self):
+		"""One iteration of the game ticker"""
+		self.tick = self.tick + 1
+
+		if self.tick == 1:
+			print("Setting up game, dealing cards to all players.")
+			self.dealCards()
+			return
+
+		if self.waitforplayer:
+			return
+
+		for player in self.players:
+			if player.isdealer:
+				continue
+			if player.playing:
+				player.action(self)
+
 
 	def addPlayers(self, player):
 		"""Takes a list of players, adds them to the existing game."""
 		self.players.append(player)
+
+	def removePlayer(self, player):
+		"""Sets the player as not playing (out)"""
+		player.playing = False
 	
 	def setDealer(self, player):
 		"""Argument must be a Player object, replaces dealer with this player"""
@@ -80,7 +107,7 @@ class GameState:
 			self.players.remove(player)
 	
 	def dealCards(self):
-		"""The dealer will deal cards to all players present at the table"""
+		"""The dealer will deal cards to all players present at the table except himself"""
 		if not self.dealer:
 			print("No dealer present")
 			return False
@@ -90,9 +117,17 @@ class GameState:
 			print("Out of cards, reseting deck")
 		
 		for player in self.players:
+			if player.isdealer:
+				continue
 			dealtcard = self.dealer.deck.draw_card()
-			print("Dealer {0} dealt {1}".format(self.dealer.name, dealtcard.name))
+			print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, dealtcard.name, player.name))
 			player.receiveCard(dealtcard)
+
+	def dealToPlayer(self, player):
+		"""The dealer deals a card to the player face up"""
+		card = self.dealer.deck.draw_card()
+		print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
+		player.receiveCard(card)
 	
 	def updateScore(self):
 		"""Updates the scores of all players"""
@@ -103,18 +138,22 @@ class GameState:
 		"""Starts the game"""
 		self.isrunning = True
 
-	def endGame(self, resetdealer = False):
+	def endGame(self, resetdealer = False, reset = True):
 		"""Ends the game and resets non dealer players"""
-		for player in self.players:
-			player.resetPlayer()
+		if reset:
+			for player in self.players:
+				player.resetPlayer()
 
-		if resetdealer:
-			self.dealer.resetPlayer()
+			if resetdealer:
+				self.dealer.resetPlayer()
 
 		self.isrunning = False
 
-
-
+	def getDealtFaceUps(self):
+		faceups = []
+		for player in self.players:
+			faceups = player.deck.getFaceUps()
+		return faceups
 
 
 
@@ -124,12 +163,16 @@ class Player:
 	def __init__(self, name, dealer = False):
 		self.name = name
 		self.score = 0
+		self.playing = True
 		if not dealer:
 			self.deck = Deck("My Deck", False)
 			self.isdealer = False
 		else:
 			self.deck = Deck("Dealer's deck")
 			self.isdealer = True
+	
+	def getCards(self):
+		return self.deck.cards
 
 	def adjustScore(self, adj):
 		"""Adjusts score by X"""
@@ -143,7 +186,7 @@ class Player:
 	def updateScore(self):
 		"""calculates the player score based on cards in their deck(hand)"""
 		if not self.isdealer:
-			self.score = sum([float(card.value) for card in self.deck.cards])
+			self.score = sum([float(card.value) for card in self.getCards()])
 		else:
 			print("Dealer cannot have a score")
 			return False
@@ -155,7 +198,81 @@ class Player:
 		else:
 			self.deck = Deck("Dealer's deck")
 
+class BotPlayer(Player):
+	botnames = ["Terry", "Hannah", "Steve", "Mark", "James", "Jed", "Rachael", "Brian", "Chadwick", "Wolfgang"]
+	botrisks = [3, 5, 7, 10, 15, 20, 30, 40, 50, 60]
+	def __init__(self, name = None):
+		super().__init__("Bot")
+		if name:
+			self.name = name
+		else:
+			self.name = choice(self.botnames)
+			self.botnames.remove(self.name)
+			print("No name provided for bot: selecting {0}".format(self.name))
+		self.risk = choice(self.botrisks)
 
+	def action(self, gamestate):
+		self.reviewHand(gamestate)
+	
+	def reviewHand(self, gamestate):
+		my_hand = sum([float(card.value) for card in self.getCards()])
+		target_score = float(7.5)
+		score_to_get = target_score - my_hand
+
+		if self.checkWinCondition():
+			return self.win(gamestate)
+
+		faceups = list(gamestate.getDealtFaceUps())
+		potential_cards = Deck(silent = True).cards
+
+		# Remove cards which we *know* have been played from the list of potentials still in play
+
+		for card in faceups:
+			for pot_card in potential_cards:
+				if card.code == pot_card.code: # ugh, a better way to do this maybe?
+					potential_cards.remove(pot_card)
+		
+		# Work out the probabilty of drawing exactly what we need to win, or drawing lower...
+
+		if probability.probDrawExactValue(score_to_get, potential_cards) * 100 > self.risk or probability.probDrawValueOrLess(score_to_get, potential_cards) * 100 > self.risk:
+			self.draw(gamestate)
+			if self.checkLoseCondition():
+				self.bust(gamestate)
+			return
+
+		# So we didn't want to draw in either case. Let's pass instead.
+
+		return self.stay(gamestate)
+
+		
+	def checkWinCondition(self):
+		score = sum([float(card.value) for card in self.getCards()])
+		if score == 7.5:
+			return True
+
+	def checkLoseCondition(self):
+		score = sum([float(card.value) for card in self.getCards()])
+		if score > 7.5:
+			return True
+		
+	def win(self, gamestate):
+		print(self.name + " Won the game!")
+		gamestate.endGame(reset = False)
+		return
+	
+	def bust(self, gamestate):
+		print(self.name + " went bust!")
+		gamestate.removePlayer(self)
+		return
+
+	def stay(self, gamestate):
+		print(self.name + " stayed.")
+		return
+	
+	def draw(self, gamestate):
+		print(self.name + " drew a card")
+		gamestate.dealToPlayer(self)
+		return
 
 class Card:
 	"""Basic class for storing card attributes"""
@@ -166,26 +283,36 @@ class Card:
 		self.value = value
 		self.name  = name
 		self.img   = pygame.image.load("images/" + code + ".png")
+		self.faceup = False
+	
+	def setFaceUp(self):
+		self.faceup = True
+	
+	def flip(self):
+		self.faceup = not self.faceup
+
+	def setFaceDown(self):
+		self.faceup = False
 
 
 class Deck:
 	"""Class for loading managing and manipulating a list of Card objects"""
 	img = pygame.image.load("images/deck.jpg")
 
-	def __init__(self, name = "Deck", forge = True, shuffle = True):
+	def __init__(self, name = "Deck", forge = True, shuffle = True, silent = False):
 
 		self.name = ""
 		self.cards = []
 
 		if forge:
-			print("Forging cards {0}".format(self.name))
 			self.forge_cards()
 		if shuffle:
 			self.shuffle()
 		if name:
 			self.name = name
-		
-		print("Initialized new Deck ({0})with cards: ({1})".format(self.name, len(self.cards)))
+
+		if not silent:
+			print("Initialized new Deck ({0})with cards: ({1})".format(self.name, len(self.cards)))
 
 	def forge_cards(self):
 		"""Spawns a new list of cards and adds them to the deck, card values taken from values.txt"""
@@ -209,10 +336,17 @@ class Deck:
 		shuffled_deck = []
 		while len(self.cards):
 			for card in self.cards:
-				if prob(30):
+				if probability.prob(30):
 					self.cards.remove(card)
 					shuffled_deck.append(card)
 		self.cards = shuffled_deck
+
+	def getFaceUps(self):
+		cards = []
+		for card in self.cards:
+			if card.faceup:
+				cards.append(card)
+		return cards
 
 
 class Text:

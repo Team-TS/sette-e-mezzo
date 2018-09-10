@@ -44,7 +44,7 @@ while True:
 
                 player = Player("Me")
                 my_player = player
-                gamestate = GameState(player)
+                gamestate = GameState([player])
         
         # User input
         for event in Game.events():
