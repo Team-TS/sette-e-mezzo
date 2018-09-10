@@ -1,6 +1,7 @@
 import random, pygame, sys 
 from pygame.locals import *
-from classes import *
+from game import *
+from display import *
 
 
 # Colour variables (UPPERCASE)
@@ -19,8 +20,8 @@ BLACK    = (  0,   0,   0)
 
 # constants (CamelCase)
 Name             =  "Sette e mezzo"
-WindowWidth      =  800
-WindowHeight     =  500
+WindowWidth      =  1024
+WindowHeight     =  768
 GameSpeed        =  60
 Game             =  Initiate(Name,WindowWidth,WindowHeight)
 StdFont          =  "Archivo-SemiBold"  
