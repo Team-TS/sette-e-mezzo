@@ -1,7 +1,10 @@
 import pygame
 from pygame.locals import *
+import globalvars
+from game import *
 
-class Initiate:
+
+class GameInstance:
 	""" Class for handelling pygame init() and other pygame modules"""
 
 	def __init__(self,name,w,h):
@@ -17,6 +20,7 @@ class Initiate:
 
 	def quit(self):
 		"""Closes the application"""
+		globalvars.state = globalvars.STATE_KILL
 		pygame.quit()
 
 	def vistext(self,TextObj,txt,colour = False):
@@ -46,6 +50,56 @@ class Initiate:
 		self.fps.tick(speed)
 		pygame.display.update()
 
+	def showMenu(self):
+		while True:
+			self.display.fill((255, 255, 255))
+			PlayButton = Button((497,349),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
+			QuitButton = Button((497,429), globalvars.StdFont,30, globalvars.BLACK, "Quit", globalvars.BLUE, globalvars.CYAN)
+			self.visbutton(QuitButton)
+			self.visbutton(PlayButton)
+			self.update(globalvars.GameSpeed)
+
+			for event in self.events():
+				if event.type == pygame.QUIT or QuitButton.check(event):
+					self.quit()
+					return 1
+				if PlayButton.check(event):
+					return 2
+					
+	def runGame(self):
+		running = True
+		my_player = Player("My Name")
+		gamestate = GameState([my_player])
+		gamestate.startGame()
+
+		while running and gamestate:
+			# Draw the screen and controls
+			self.display.fill(globalvars.WHITE)
+			DrawButton = Button((497,700),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
+			self.visbutton(DrawButton)
+			StayButton = Button((560,700),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
+			self.visbutton(StayButton)
+
+			if not gamestate.waitforplayer:
+				gamestate.fire()
+
+			self.update(globalvars.GameSpeed)
+
+
+			# Event handling
+			for event in self.events():
+				if event.type == pygame.QUIT:
+					self.quit()
+					return 0
+				if DrawButton.check(event):
+					print("Draw event fired")
+				if StayButton.check(event):
+					print("Stay event fired")
+
+
+
+
+
 class Text:
 	"""Basic class for storing text values such as location font and colour"""
 	
@@ -68,6 +122,9 @@ class Button(Text):
 		self.surface          = self.font.render(str(self.txt),True,self.colour,self.background)
 		self.position         = self.surface.get_rect()
 		self.position.topleft = self.xy
+
+	def render(self):
+		"""Render the button to the screen"""
 
 	def check(self,event):
 		"""Returns True for a mouse click on the button"""

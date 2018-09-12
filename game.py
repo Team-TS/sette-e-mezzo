@@ -40,6 +40,8 @@ class GameState:
 			if player.playing:
 				player.action(self)
 
+		self.waitforplayer = True
+
 
 	def addPlayers(self, player):
 		"""Takes a list of players, adds them to the existing game."""
@@ -123,6 +125,9 @@ class Player:
 		else:
 			self.deck = Deck("Dealer's deck")
 			self.isdealer = True
+	
+	def action(self, gamestate):
+		return
 	
 	def getCards(self):
 		return self.deck.cards
