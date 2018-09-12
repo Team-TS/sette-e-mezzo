@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import globalvars
 from game import *
+import math
 
 
 class GameInstance:
@@ -66,19 +67,27 @@ class GameInstance:
 				if PlayButton.check(event):
 					return 2
 					
-	def runGame(self):
+	def runGame(self, numbots):
 		running = True
 		my_player = Player("My Name")
-		gamestate = GameState([my_player])
+		gamestate = GameState([my_player], numbots)
 		gamestate.startGame()
+		playarea = PlayArea(gamestate.players, self)
+		gamestate.waitforplayer = True
 
 		while running and gamestate:
 			# Draw the screen and controls
 			self.display.fill(globalvars.WHITE)
-			DrawButton = Button((497,700),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
+			DrawButton = Button((330,700),globalvars.StdFont,30,globalvars.GREEN,"Draw",globalvars.YELLOW,globalvars.CYAN)
 			self.visbutton(DrawButton)
-			StayButton = Button((560,700),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
+			StayButton = Button((630,700),globalvars.StdFont,30,globalvars.GREEN,"Stay",globalvars.YELLOW,globalvars.CYAN)
 			self.visbutton(StayButton)
+
+			#Draw the card areas and cards
+
+			for loc in playarea.locs:
+				coords = playarea.locs[loc]
+				self.display.blit(globalvars.playerimg, coords)
 
 			if not gamestate.waitforplayer:
 				gamestate.fire()
@@ -140,3 +149,30 @@ class Button(Text):
 					self.surface = self.surface = self.font.render(str(self.txt),True,self.colour,self.hover)
 				else:
 					self.surface = self.font.render(str(self.txt),True,self.colour,self.background)
+
+class PlayArea():
+	def __init__(self, players,surface):
+		# Calculate the correct distribution of players
+		circle = 360
+		angle = circle / len(players)
+		print(len(players))
+		radian = angle * 0.0174532925
+		radangle = radian
+		radius = 250
+		self.locs = {}
+
+		for player in players:
+			x = (radius * math.cos(radangle)) + (globalvars.WindowWidth / 2) - 58
+			y = (radius * math.sin(radangle)) + (globalvars.WindowHeight / 2) - 57
+
+			print("Location for {0} - {1},{2}".format(player.name, math.floor(x), math.floor(y)))
+			coords = (x, y)
+			self.locs[player] = coords
+			radangle += radian
+		
+		print(self.locs)
+
+
+class PlayerArea():
+	def __init__(self):
+		return

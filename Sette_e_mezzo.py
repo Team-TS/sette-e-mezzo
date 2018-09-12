@@ -26,5 +26,5 @@ while run:
 
         while inGameState():
                 print("game")
-                Game.runGame()
+                Game.runGame(7)
                 setMenuState()

@@ -6,16 +6,22 @@ class GameState:
 	"""Class for the state of a game, keeps track of players involved, dealer etc. Pass a list of players as argument."""
 	name = "GameState"
 
-	def __init__(self, players):
+	def __init__(self, players, bots = 0):
 		self.players = players
 		self.isrunning = False
 		self.dealer = None
 		self.waitforplayer = False
 		self.tick = 0
-		if len(self.players) < 2:
+		if len(self.players) < 2 and bots < 1:
 			""" We can't play alone"""
 			enemy = Player(choice(["Mark", "Emily", "Steve", "Amy"]), True)
 			self.dealer = enemy
+			self.players.append(enemy)
+		elif bots:
+			while bots > 0:
+				TheBot = BotPlayer()
+				self.players.append(TheBot)
+				bots -= 1
 		else:
 			dealer = choice(players)
 			self.dealer = dealer
