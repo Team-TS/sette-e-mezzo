@@ -1,7 +1,11 @@
 import pygame
 from pygame.locals import *
+import globalvars
+from game import *
+import math
 
-class Initiate:
+
+class GameInstance:
 	""" Class for handelling pygame init() and other pygame modules"""
 
 	def __init__(self,name,w,h):
@@ -17,6 +21,7 @@ class Initiate:
 
 	def quit(self):
 		"""Closes the application"""
+		globalvars.state = globalvars.STATE_KILL
 		pygame.quit()
 
 	def vistext(self,TextObj,txt,colour = False):
@@ -46,6 +51,86 @@ class Initiate:
 		self.fps.tick(speed)
 		pygame.display.update()
 
+	def showMenu(self):
+		while True:
+			self.display.fill((255, 255, 255))
+			PlayButton = Button((497,349),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
+			QuitButton = Button((497,429), globalvars.StdFont,30, globalvars.BLACK, "Quit", globalvars.BLUE, globalvars.CYAN)
+			self.visbutton(QuitButton)
+			self.visbutton(PlayButton)
+			self.update(globalvars.GameSpeed)
+
+			for event in self.events():
+				if event.type == pygame.QUIT or QuitButton.check(event):
+					self.quit()
+					return 1
+				if PlayButton.check(event):
+					return 2
+					
+	def runGame(self, numbots):
+		running = True
+		my_player = Player("My Name")
+		gamestate = GameState([my_player], numbots)
+		gamestate.startGame()
+		playarea = PlayArea(gamestate.players, self)
+
+		while running and gamestate:
+			if gamestate.isrunning:
+				# Draw the screen and controls
+				self.display.fill(globalvars.WHITE)
+				DrawButton = Button((330,700),globalvars.StdFont,30,globalvars.GREEN,"Draw",globalvars.YELLOW,globalvars.CYAN)
+				self.visbutton(DrawButton)
+				StayButton = Button((630,700),globalvars.StdFont,30,globalvars.GREEN,"Stay",globalvars.YELLOW,globalvars.CYAN)
+				self.visbutton(StayButton)
+			
+			ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
+			self.visbutton(ExitButton)
+
+			#Draw the card areas and cards
+
+			for loc in playarea.locs:
+				coords = playarea.locs[loc]
+				self.display.blit(globalvars.playerimg, coords)
+			
+			for area in playarea.cardareas:
+				area.cardarea.render(self)
+
+			if not gamestate.waitforplayer:
+				gamestate.fire()
+
+			#Identify the dealer and player.
+
+			#Dealer
+			y_offset = 50
+			loc = (gamestate.dealer.loc["x"], gamestate.dealer.loc["y"] - y_offset)
+			text = Text(loc, globalvars.StdFont,16,globalvars.GREEN)
+			self.vistext(text, "Dealer")
+
+			#Player
+			loc = (my_player.loc["x"], my_player.loc["y"] - y_offset)
+			text = Text(loc, globalvars.StdFont,16,globalvars.GREEN)
+			self.vistext(text, "Player")
+
+			self.update(globalvars.GameSpeed)
+
+
+			# Event handling
+			for event in self.events():
+				if event.type == pygame.QUIT:
+					self.quit()
+					return 0
+				if DrawButton.check(event):
+					gamestate.dealToPlayer(my_player)
+					gamestate.waitforplayer = False
+				if StayButton.check(event):
+					gamestate.waitforplayer = False
+				if ExitButton.check(event):
+					gamestate.endGame()
+					return
+
+
+
+
 class Text:
 	"""Basic class for storing text values such as location font and colour"""
 	
@@ -69,6 +154,9 @@ class Button(Text):
 		self.position         = self.surface.get_rect()
 		self.position.topleft = self.xy
 
+	def render(self):
+		"""Render the button to the screen"""
+
 	def check(self,event):
 		"""Returns True for a mouse click on the button"""
 
@@ -83,3 +171,57 @@ class Button(Text):
 					self.surface = self.surface = self.font.render(str(self.txt),True,self.colour,self.hover)
 				else:
 					self.surface = self.font.render(str(self.txt),True,self.colour,self.background)
+
+class PlayArea():
+	def __init__(self, players,surface):
+		# Calculate the correct distribution of players
+		circle = 360
+		angle = circle / len(players)
+		print(len(players))
+		radian = angle * 0.0174532925
+		radangle = radian
+		radius = 250 # Radius of the display circle
+		Woffset = 58 # Width co-ord adjustment
+		Hoffset = 57 # Height co-ord adjustment
+		areadist = 0 # How far in is the card area rendered
+		self.locs = {}
+		self.cardareas = {}
+
+		for player in players:
+			x = (radius * math.cos(radangle)) + (globalvars.WindowWidth / 2) - Woffset
+			y = (radius * math.sin(radangle)) + (globalvars.WindowHeight / 2) - Hoffset
+
+			coords = (x, y)
+			self.locs[player] = coords
+			player.loc = {"x" : x, "y" : y}
+
+			#Card areas
+			x = ((radius - areadist) * math.cos(radangle)) + (globalvars.WindowWidth / 2) - Woffset - 60
+			y = ((radius - areadist) * math.sin(radangle)) + (globalvars.WindowHeight / 2) - Hoffset
+
+			cardarea = PlayerArea(player, {"x" : x,"y" : y})
+			player.cardarea = cardarea
+			self.cardareas[player] = cardarea
+
+			radangle += radian
+
+
+class PlayerArea():
+	def __init__(self, player, loc):
+		self.player = player
+		self.loc = loc
+
+	def render(self, game):
+		count = 1
+		for card in self.player.getCards():
+			img = card.img
+			x = self.loc["x"] + (count * 60)
+			y = self.loc["y"]
+			cardloc = (x, y)
+			if not card.faceup:
+				img = globalvars.facedownimg
+				
+			game.vissurf(img, cardloc)
+			count += 1
+
+		return

@@ -1,25 +1,33 @@
 import pygame
 import probability
 from random import choice
+import globalvars
 
 class GameState:
 	"""Class for the state of a game, keeps track of players involved, dealer etc. Pass a list of players as argument."""
 	name = "GameState"
 
-	def __init__(self, players):
+	def __init__(self, players, bots = 0):
 		self.players = players
 		self.isrunning = False
 		self.dealer = None
 		self.waitforplayer = False
 		self.tick = 0
+		self.dealdeck = Deck("Dealers Deck")
+		if bots:
+			while bots > 0:
+				TheBot = BotPlayer()
+				self.players.append(TheBot)
+				bots -= 1
+
 		if len(self.players) < 2:
 			""" We can't play alone"""
-			enemy = Player(choice(["Mark", "Emily", "Steve", "Amy"]), True)
+			enemy = BotPlayer(choice(["Mark", "Emily", "Steve", "Amy"]))
 			self.dealer = enemy
+			self.players.append(enemy)
 		else:
 			dealer = choice(players)
 			self.dealer = dealer
-			dealer.deck = Deck("Dealer's Deck")
 			dealer.isdealer = True
 
 	def fire(self):
@@ -29,6 +37,7 @@ class GameState:
 		if self.tick == 1:
 			print("Setting up game, dealing cards to all players.")
 			self.dealCards()
+			self.waitforplayer = True
 			return
 
 		if self.waitforplayer:
@@ -39,6 +48,8 @@ class GameState:
 				continue
 			if player.playing:
 				player.action(self)
+
+		self.waitforplayer = True
 
 
 	def addPlayers(self, player):
@@ -65,20 +76,21 @@ class GameState:
 			print("No dealer present")
 			return False
 
-		if not len(self.dealer.deck.cards): # temporary solution 
-			self.endGame(True)
-			print("Out of cards, reseting deck")
-		
 		for player in self.players:
 			if player.isdealer:
 				continue
-			dealtcard = self.dealer.deck.draw_card()
+			if not len(self.dealdeck.cards): # temporary solution 
+				self.endGame(True)
+				print("Out of cards, reseting game")
+				return
+			dealtcard = self.dealdeck.draw_card()
 			print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, dealtcard.name, player.name))
 			player.receiveCard(dealtcard)
 
 	def dealToPlayer(self, player):
 		"""The dealer deals a card to the player face up"""
-		card = self.dealer.deck.draw_card()
+		card = self.dealdeck.draw_card()
+		card.setFaceUp()
 		print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
 		player.receiveCard(card)
 	
@@ -117,12 +129,17 @@ class Player:
 		self.name = name
 		self.score = 0
 		self.playing = True
+		self.cardarea = None
+		self.loc = None
 		if not dealer:
 			self.deck = Deck("My Deck", False)
 			self.isdealer = False
 		else:
 			self.deck = Deck("Dealer's deck")
 			self.isdealer = True
+	
+	def action(self, gamestate):
+		return
 	
 	def getCards(self):
 		return self.deck.cards
@@ -236,7 +253,7 @@ class Card:
 		self.suit  = suit
 		self.value = value
 		self.name  = name
-		self.img   = pygame.image.load("images/cards/" + code + ".png")
+		self.img   = globalvars.cardimages[code]
 		self.faceup = False
 	
 	def setFaceUp(self):
@@ -251,7 +268,6 @@ class Card:
 
 class Deck:
 	"""Class for loading managing and manipulating a list of Card objects"""
-	img = pygame.image.load("images/deck.jpg")
 
 	def __init__(self, name = "Deck", forge = True, shuffle = True, silent = False):
 
@@ -270,8 +286,7 @@ class Deck:
 
 	def forge_cards(self):
 		"""Spawns a new list of cards and adds them to the deck, card values taken from values.txt"""
-		file_read = [i.split(",") for i in open("values.txt").read().split("\n")]
-		for line in file_read:
+		for line in globalvars.cardvalues:
 			card = Card(line[0], line[1], line[2], line[3])
 			self.addCard(card)
 
