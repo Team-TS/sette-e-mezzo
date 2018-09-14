@@ -129,6 +129,9 @@ class Player:
 		self.name = name
 		self.score = 0
 		self.playing = True
+		self.isbust = False
+		self.isstay = False
+		self.isme = False
 		self.cardarea = None
 		self.loc = None
 		if not dealer:
@@ -167,6 +170,22 @@ class Player:
 			self.deck = Deck("My Deck", False)
 		else:
 			self.deck = Deck("Dealer's deck")
+
+	def stay(self, gamestate):
+		print(self.name + " stayed.")
+		self.isstay = True
+		self.playing = False
+		return
+
+	def bust(self, gamestate):
+		print(self.name + " went bust!")
+		for card in self.deck.cards:
+			if not card.faceup:
+				card.flip()
+		self.playing = False
+		self.isbust = True
+		#gamestate.removePlayer(self)
+		return
 
 class BotPlayer(Player):
 	botnames = ["Terry", "Hannah", "Steve", "Mark", "James", "Jed", "Rachael", "Brian", "Chadwick", "Wolfgang"]
@@ -229,15 +248,6 @@ class BotPlayer(Player):
 	def win(self, gamestate):
 		print(self.name + " Won the game!")
 		gamestate.endGame(reset = False)
-		return
-	
-	def bust(self, gamestate):
-		print(self.name + " went bust!")
-		gamestate.removePlayer(self)
-		return
-
-	def stay(self, gamestate):
-		print(self.name + " stayed.")
 		return
 	
 	def draw(self, gamestate):

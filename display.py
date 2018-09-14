@@ -3,6 +3,7 @@ from pygame.locals import *
 import globalvars
 from game import *
 import math
+import sys
 
 
 class GameInstance:
@@ -23,6 +24,8 @@ class GameInstance:
 		"""Closes the application"""
 		globalvars.state = globalvars.STATE_KILL
 		pygame.quit()
+		sys.exit()
+
 
 	def vistext(self,TextObj,txt,colour = False):
 		"""Renders given text to screen using preferences stored in a Text object"""
@@ -52,10 +55,12 @@ class GameInstance:
 		pygame.display.update()
 
 	def showMenu(self):
+
+		PlayButton = Button((497,349),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
+		QuitButton = Button((497,429), globalvars.StdFont,30, globalvars.BLACK, "Quit", globalvars.BLUE, globalvars.CYAN)
+
 		while True:
 			self.display.fill((255, 255, 255))
-			PlayButton = Button((497,349),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
-			QuitButton = Button((497,429), globalvars.StdFont,30, globalvars.BLACK, "Quit", globalvars.BLUE, globalvars.CYAN)
 			self.visbutton(QuitButton)
 			self.visbutton(PlayButton)
 			self.update(globalvars.GameSpeed)
@@ -70,20 +75,21 @@ class GameInstance:
 	def runGame(self, numbots):
 		running = True
 		my_player = Player("My Name")
+		my_player.isme = True
 		gamestate = GameState([my_player], numbots)
 		gamestate.startGame()
 		playarea = PlayArea(gamestate.players, self)
+		ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
+		StayButton = Button((630,700),globalvars.StdFont,30,globalvars.GREEN,"Stay",globalvars.YELLOW,globalvars.CYAN)
+		DrawButton = Button((330,700),globalvars.StdFont,30,globalvars.GREEN,"Draw",globalvars.YELLOW,globalvars.CYAN)
 
 		while running and gamestate:
 			if gamestate.isrunning:
 				# Draw the screen and controls
 				self.display.fill(globalvars.WHITE)
-				DrawButton = Button((330,700),globalvars.StdFont,30,globalvars.GREEN,"Draw",globalvars.YELLOW,globalvars.CYAN)
 				self.visbutton(DrawButton)
-				StayButton = Button((630,700),globalvars.StdFont,30,globalvars.GREEN,"Stay",globalvars.YELLOW,globalvars.CYAN)
 				self.visbutton(StayButton)
 			
-			ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
 			self.visbutton(ExitButton)
 
 			#Draw the card areas and cards
@@ -103,13 +109,24 @@ class GameInstance:
 			#Dealer
 			y_offset = 50
 			loc = (gamestate.dealer.loc["x"], gamestate.dealer.loc["y"] - y_offset)
-			text = Text(loc, globalvars.StdFont,16,globalvars.GREEN)
-			self.vistext(text, "Dealer")
+			text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
+			self.vistext(text, gamestate.dealer.name + " the dealer")
 
 			#Player
 			loc = (my_player.loc["x"], my_player.loc["y"] - y_offset)
-			text = Text(loc, globalvars.StdFont,16,globalvars.GREEN)
-			self.vistext(text, "Player")
+			text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
+			self.vistext(text, my_player.name)
+
+			for player in gamestate.players:
+				if player.isbust == True:
+					loc = (player.loc["x"], player.loc["y"] - y_offset)
+					text = Text(loc, globalvars.StdFont,16,globalvars.RED)
+					self.vistext(text, "Bust")
+				elif player.isstay == True:
+					loc = (player.loc["x"], player.loc["y"] - y_offset)
+					text = Text(loc, globalvars.StdFont,16,globalvars.ORANGE)
+					self.vistext(text, "Stay")
+
 
 			self.update(globalvars.GameSpeed)
 
@@ -123,6 +140,7 @@ class GameInstance:
 					gamestate.dealToPlayer(my_player)
 					gamestate.waitforplayer = False
 				if StayButton.check(event):
+					my_player.stay(gamestate)
 					gamestate.waitforplayer = False
 				if ExitButton.check(event):
 					gamestate.endGame()
@@ -168,7 +186,7 @@ class Button(Text):
 		          
 			if event.type == MOUSEMOTION or event.type == MOUSEBUTTONDOWN:
 				if self.position.collidepoint(event.pos):
-					self.surface = self.surface = self.font.render(str(self.txt),True,self.colour,self.hover)
+					self.surface = self.font.render(str(self.txt),True,self.colour,self.hover)
 				else:
 					self.surface = self.font.render(str(self.txt),True,self.colour,self.background)
 
@@ -215,7 +233,7 @@ class PlayerArea():
 		count = 1
 		for card in self.player.getCards():
 			img = card.img
-			x = self.loc["x"] + (count * 60)
+			x = self.loc["x"] + (count * 30)
 			y = self.loc["y"]
 			cardloc = (x, y)
 			if not card.faceup:

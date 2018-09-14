@@ -6,7 +6,7 @@ from globalvars import *
 
 # constants (CamelCase)
 Name             =  "Sette e mezzo"
-Game             =  GameInstance(Name,globalvars.WindowWidth,globalvars.WindowHeight)
+Game             =  GameInstance(Name,WindowWidth,WindowHeight)
 
 # game states and player
 run = True
