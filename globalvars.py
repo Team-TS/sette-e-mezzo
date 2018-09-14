@@ -17,7 +17,21 @@ StdFont          =  "Archivo-SemiBold"
 GameSpeed        =  60
 WindowWidth      =  1024
 WindowHeight     =  768
+
+#Load files once.
+
 playerimg = image.load(path.join('images', 'avatar.png'))
+facedownimg = image.load(path.join('images', 'cards', 'cardback.png'))
+cardvalues = [i.split(",") for i in open("values.txt").read().split("\n")]
+cardimages = {}
+
+def loadCardImages():
+    for card in cardvalues:
+        img_code = card[0]
+        img = image.load(path.join('images', 'cards', img_code + '.png'))
+        cardimages[img_code] = img
+
+loadCardImages()
 
 STATE_KILL = 0
 STATE_MENU = 1

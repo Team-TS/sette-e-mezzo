@@ -73,24 +73,43 @@ class GameInstance:
 		gamestate = GameState([my_player], numbots)
 		gamestate.startGame()
 		playarea = PlayArea(gamestate.players, self)
-		gamestate.waitforplayer = True
 
 		while running and gamestate:
-			# Draw the screen and controls
-			self.display.fill(globalvars.WHITE)
-			DrawButton = Button((330,700),globalvars.StdFont,30,globalvars.GREEN,"Draw",globalvars.YELLOW,globalvars.CYAN)
-			self.visbutton(DrawButton)
-			StayButton = Button((630,700),globalvars.StdFont,30,globalvars.GREEN,"Stay",globalvars.YELLOW,globalvars.CYAN)
-			self.visbutton(StayButton)
+			if gamestate.isrunning:
+				# Draw the screen and controls
+				self.display.fill(globalvars.WHITE)
+				DrawButton = Button((330,700),globalvars.StdFont,30,globalvars.GREEN,"Draw",globalvars.YELLOW,globalvars.CYAN)
+				self.visbutton(DrawButton)
+				StayButton = Button((630,700),globalvars.StdFont,30,globalvars.GREEN,"Stay",globalvars.YELLOW,globalvars.CYAN)
+				self.visbutton(StayButton)
+			
+			ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
+			self.visbutton(ExitButton)
 
 			#Draw the card areas and cards
 
 			for loc in playarea.locs:
 				coords = playarea.locs[loc]
 				self.display.blit(globalvars.playerimg, coords)
+			
+			for area in playarea.cardareas:
+				area.cardarea.render(self)
 
 			if not gamestate.waitforplayer:
 				gamestate.fire()
+
+			#Identify the dealer and player.
+
+			#Dealer
+			y_offset = 50
+			loc = (gamestate.dealer.loc["x"], gamestate.dealer.loc["y"] - y_offset)
+			text = Text(loc, globalvars.StdFont,16,globalvars.GREEN)
+			self.vistext(text, "Dealer")
+
+			#Player
+			loc = (my_player.loc["x"], my_player.loc["y"] - y_offset)
+			text = Text(loc, globalvars.StdFont,16,globalvars.GREEN)
+			self.vistext(text, "Player")
 
 			self.update(globalvars.GameSpeed)
 
@@ -101,10 +120,13 @@ class GameInstance:
 					self.quit()
 					return 0
 				if DrawButton.check(event):
-					print("Draw event fired")
+					gamestate.dealToPlayer(my_player)
+					gamestate.waitforplayer = False
 				if StayButton.check(event):
-					print("Stay event fired")
-
+					gamestate.waitforplayer = False
+				if ExitButton.check(event):
+					gamestate.endGame()
+					return
 
 
 
@@ -158,21 +180,48 @@ class PlayArea():
 		print(len(players))
 		radian = angle * 0.0174532925
 		radangle = radian
-		radius = 250
+		radius = 250 # Radius of the display circle
+		Woffset = 58 # Width co-ord adjustment
+		Hoffset = 57 # Height co-ord adjustment
+		areadist = 0 # How far in is the card area rendered
 		self.locs = {}
+		self.cardareas = {}
 
 		for player in players:
-			x = (radius * math.cos(radangle)) + (globalvars.WindowWidth / 2) - 58
-			y = (radius * math.sin(radangle)) + (globalvars.WindowHeight / 2) - 57
+			x = (radius * math.cos(radangle)) + (globalvars.WindowWidth / 2) - Woffset
+			y = (radius * math.sin(radangle)) + (globalvars.WindowHeight / 2) - Hoffset
 
-			print("Location for {0} - {1},{2}".format(player.name, math.floor(x), math.floor(y)))
 			coords = (x, y)
 			self.locs[player] = coords
+			player.loc = {"x" : x, "y" : y}
+
+			#Card areas
+			x = ((radius - areadist) * math.cos(radangle)) + (globalvars.WindowWidth / 2) - Woffset - 60
+			y = ((radius - areadist) * math.sin(radangle)) + (globalvars.WindowHeight / 2) - Hoffset
+
+			cardarea = PlayerArea(player, {"x" : x,"y" : y})
+			player.cardarea = cardarea
+			self.cardareas[player] = cardarea
+
 			radangle += radian
-		
-		print(self.locs)
 
 
 class PlayerArea():
-	def __init__(self):
+	def __init__(self, player, loc):
+		self.player = player
+		self.loc = loc
+
+	def render(self, game):
+		count = 1
+		for card in self.player.getCards():
+			img = card.img
+			x = self.loc["x"] + (count * 60)
+			y = self.loc["y"]
+			cardloc = (x, y)
+			if not card.faceup:
+				img = globalvars.facedownimg
+				
+			game.vissurf(img, cardloc)
+			count += 1
+
 		return
