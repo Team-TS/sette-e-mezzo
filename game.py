@@ -84,8 +84,12 @@ class GameState:
 				print("Out of cards, reseting game")
 				return
 			dealtcard = self.dealdeck.draw_card()
+			if player.isme:
+				dealtcard.setFaceUp()
 			print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, dealtcard.name, player.name))
 			player.receiveCard(dealtcard)
+			
+
 
 	def dealToPlayer(self, player):
 		"""The dealer deals a card to the player face up"""
@@ -181,7 +185,7 @@ class Player:
 		print(self.name + " went bust!")
 		for card in self.deck.cards:
 			if not card.faceup:
-				card.flip()
+				card.setFaceUp()
 		self.playing = False
 		self.isbust = True
 		#gamestate.removePlayer(self)

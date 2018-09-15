@@ -104,19 +104,20 @@ class GameInstance:
 			if not gamestate.waitforplayer:
 				gamestate.fire()
 
-			#Identify the dealer and player.
+			# Player names
+			y_offset = 110
+			for player in gamestate.players:
+				loc = (player.loc["x"], player.loc["y"] + y_offset)
+				text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
+				self.vistext(text, player.name)
 
-			#Dealer
-			y_offset = 50
-			loc = (gamestate.dealer.loc["x"], gamestate.dealer.loc["y"] - y_offset)
+			# Dealer
+			loc = (gamestate.dealer.loc["x"], gamestate.dealer.loc["y"] + y_offset)
 			text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
 			self.vistext(text, gamestate.dealer.name + " the dealer")
 
-			#Player
-			loc = (my_player.loc["x"], my_player.loc["y"] - y_offset)
-			text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
-			self.vistext(text, my_player.name)
-
+			# player statuses
+			y_offset = 50
 			for player in gamestate.players:
 				if player.isbust == True:
 					loc = (player.loc["x"], player.loc["y"] - y_offset)
@@ -135,11 +136,13 @@ class GameInstance:
 			for event in self.events():
 				if event.type == pygame.QUIT:
 					self.quit()
+					sys.exit()
 					return 0
 				if DrawButton.check(event):
 					gamestate.dealToPlayer(my_player)
 					gamestate.waitforplayer = False
 				if StayButton.check(event):
+					DrawButton.disable()
 					my_player.stay(gamestate)
 					gamestate.waitforplayer = False
 				if ExitButton.check(event):
@@ -172,8 +175,9 @@ class Button(Text):
 		self.position         = self.surface.get_rect()
 		self.position.topleft = self.xy
 
-	def render(self):
-		"""Render the button to the screen"""
+	def disable(self):
+		"""disable button display and input"""
+		self.state = False
 
 	def check(self,event):
 		"""Returns True for a mouse click on the button"""
