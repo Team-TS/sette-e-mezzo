@@ -93,10 +93,11 @@ class GameState:
 
 	def dealToPlayer(self, player):
 		"""The dealer deals a card to the player face up"""
-		card = self.dealdeck.draw_card()
-		card.setFaceUp()
-		print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
-		player.receiveCard(card)
+		if not player.isbust or not player.isstay:
+			card = self.dealdeck.draw_card()
+			card.setFaceUp()
+			print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
+			player.receiveCard(card)
 	
 	def updateScore(self):
 		"""Updates the scores of all players"""
@@ -191,6 +192,16 @@ class Player:
 		#gamestate.removePlayer(self)
 		return
 
+	def checkWinCondition(self):
+		score = sum([float(card.value) for card in self.getCards()])
+		if score == 7.5:
+			return True
+
+	def checkLoseCondition(self):
+		score = sum([float(card.value) for card in self.getCards()])
+		if score > 7.5:
+			return True
+
 class BotPlayer(Player):
 	botnames = ["Terry", "Hannah", "Steve", "Mark", "James", "Jed", "Rachael", "Brian", "Chadwick", "Wolfgang"]
 	botrisks = [3, 5, 7, 10, 15, 20, 30, 40, 50, 60]
@@ -214,7 +225,8 @@ class BotPlayer(Player):
 		score_to_get = target_score - my_hand
 
 		if self.checkWinCondition():
-			return self.win(gamestate)
+			self.playing = False
+			#return self.win(gamestate)
 
 		faceups = list(gamestate.getDealtFaceUps())
 		potential_cards = Deck(silent = True).cards
@@ -237,17 +249,6 @@ class BotPlayer(Player):
 		# So we didn't want to draw in either case. Let's pass instead.
 
 		return self.stay(gamestate)
-
-		
-	def checkWinCondition(self):
-		score = sum([float(card.value) for card in self.getCards()])
-		if score == 7.5:
-			return True
-
-	def checkLoseCondition(self):
-		score = sum([float(card.value) for card in self.getCards()])
-		if score > 7.5:
-			return True
 		
 	def win(self, gamestate):
 		print(self.name + " Won the game!")
