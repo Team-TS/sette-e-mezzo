@@ -25,6 +25,15 @@ while run:
                                 setGameState()
 
         while inGameState():
-                print("game")
-                Game.runGame(7)
+                print("Game")
+                selection = Game.runGame(7)
+                if selection:
+                        if selection == 1:
+                                setMenuState()
+                        if selection == 2:
+                                setPostgameState()
+
+        while inPostgameState():
+                print("Postgame")
+                Game.showPostgame()
                 setMenuState()

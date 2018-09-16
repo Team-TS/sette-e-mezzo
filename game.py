@@ -29,6 +29,7 @@ class GameState:
 			dealer = choice(players)
 			self.dealer = dealer
 			dealer.isdealer = True
+			dealer.playing = False 
 
 	def fire(self):
 		"""One iteration of the game ticker"""
@@ -62,6 +63,7 @@ class GameState:
 	
 	def setDealer(self, player):
 		"""Argument must be a Player object, replaces dealer with this player"""
+		print("setting dealer " + player.name)
 		if self.dealer:
 			self.players.append(self.dealer)
 			self.dealer = None
@@ -102,7 +104,7 @@ class GameState:
 	def updateScore(self):
 		"""Updates the scores of all players"""
 		for player in self.players:
-			player.updateScore()
+			player.updateScore() 
 
 	def startGame(self):
 		"""Starts the game"""
@@ -124,6 +126,13 @@ class GameState:
 		for player in self.players:
 			faceups = player.deck.getFaceUps()
 		return faceups
+
+	def getFaceDowns(self):
+		facedowns = []
+		for player in self.players:
+			for card in player.getFaceDowns():
+				facedowns.append(card)
+		return facedowns
 
 
 
@@ -201,6 +210,9 @@ class Player:
 		score = sum([float(card.value) for card in self.getCards()])
 		if score > 7.5:
 			return True
+
+	def getFaceDowns(self):
+		return [card for card in self.deck.cards if card.faceup == False]
 
 class BotPlayer(Player):
 	botnames = ["Terry", "Hannah", "Steve", "Mark", "James", "Jed", "Rachael", "Brian", "Chadwick", "Wolfgang"]

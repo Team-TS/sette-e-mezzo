@@ -16,6 +16,7 @@ class GameInstance:
 		self.display = pygame.display.set_mode((w,h))
 		self.fps     = pygame.time.Clock()
 		self.background = pygame.image.load("images/testbg.png")
+		self.gamestate = None 
 
 	def events(self):
 		"""returns a list of pygame events"""
@@ -74,20 +75,21 @@ class GameInstance:
 					return 2
 					
 	def runGame(self, numbots):
+
 		running = True
 		my_player = Player("My Name")
 		my_player.isme = True
-		gamestate = GameState([my_player], numbots)
-		gamestate.startGame()
-		playarea = PlayArea(gamestate.players, self)
+		self.gamestate = GameState([my_player], numbots)
+		self.gamestate.startGame()
+		playarea = PlayArea(self.gamestate.players, self)
 		ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
 		StayButton = Button((630,700),globalvars.StdFont,30,globalvars.GREEN,"Stay",globalvars.YELLOW,globalvars.CYAN)
 		DrawButton = Button((330,700),globalvars.StdFont,30,globalvars.GREEN,"Draw",globalvars.YELLOW,globalvars.CYAN)
 		ResolveButton = Button((800,700),globalvars.StdFont,30,globalvars.GREEN,"Resolve",globalvars.YELLOW,globalvars.CYAN)
 		ResolveButton.disable()
 
-		while running and gamestate:
-			if gamestate.isrunning:
+		while running and self.gamestate:
+			if self.gamestate.isrunning:
 				# Draw the screen and controls
 				self.display.blit(self.background,(0,0))
 				self.visbutton(DrawButton)
@@ -97,8 +99,9 @@ class GameInstance:
 			self.visbutton(ExitButton)
 
 			# check your players score
-			if my_player.checkLoseCondition():
-				my_player.bust(gamestate)
+			if my_player.playing:
+				if my_player.checkLoseCondition():
+					my_player.bust(self.gamestate)
 
 			# correct options
 			if not my_player.playing:
@@ -115,24 +118,24 @@ class GameInstance:
 			for area in playarea.cardareas:
 				area.cardarea.render(self)
 
-			if not gamestate.waitforplayer:
-				gamestate.fire()
+			if not self.gamestate.waitforplayer:
+				self.gamestate.fire()
 
 			# Player names
 			y_offset = 110
-			for player in gamestate.players:
+			for player in self.gamestate.players:
 				loc = (player.loc["x"], player.loc["y"] + y_offset)
 				text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
 				self.vistext(text, player.name)
 
 			# Dealer
-			loc = (gamestate.dealer.loc["x"], gamestate.dealer.loc["y"] + y_offset)
+			loc = (self.gamestate.dealer.loc["x"], self.gamestate.dealer.loc["y"] + y_offset)
 			text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
-			self.vistext(text, gamestate.dealer.name + " the dealer")
+			self.vistext(text, self.gamestate.dealer.name + " the dealer")
 
 			# player status
 			y_offset = 50
-			for player in gamestate.players:
+			for player in self.gamestate.players:
 				if player.isbust == True:
 					loc = (player.loc["x"], player.loc["y"] - y_offset)
 					text = Text(loc, globalvars.StdFont,16,globalvars.RED)
@@ -150,25 +153,32 @@ class GameInstance:
 			for event in self.events():
 				if event.type == pygame.QUIT:
 					self.quit()
-					return 0
+					return 0 
 				if DrawButton.check(event):
-					gamestate.dealToPlayer(my_player)
-					gamestate.waitforplayer = False
+					self.gamestate.dealToPlayer(my_player)
+					self.gamestate.waitforplayer = False
 				if StayButton.check(event):
 					DrawButton.disable()
-					my_player.stay(gamestate)
-					gamestate.waitforplayer = False
+					my_player.stay(self.gamestate)
+					self.gamestate.waitforplayer = False
 				if ResolveButton.check(event):
-					# end game when all players done
-					if all([not player.playing for player in gamestate.players]):
-						self.showPostgame()
-					gamestate.waitforplayer = False
+					# end game when all players done and all cards revealed
+					if all([not player.playing for player in self.gamestate.players]):
+						if not self.gamestate.getFaceDowns():
+							self.gamestate.endGame(reset = False)
+							return 2	
+						else:
+							for card in self.gamestate.getFaceDowns():
+								card.setFaceUp()
+					self.gamestate.waitforplayer = False
 				if ExitButton.check(event):
-					gamestate.endGame()
-					return
+					self.gamestate.endGame()
+					return 1
 
 	def showPostgame(self):
+
 		ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
+		self.gamestate.updateScore()
 
 		while True:
 
@@ -177,12 +187,14 @@ class GameInstance:
 				if event.type == pygame.QUIT:
 					self.quit()
 					return 0
-			if ExitButton.check(event):
-				gamestate.endGame()
-				return
+				if ExitButton.check(event):
+					return
 
 			self.display.fill((255, 255, 255))
-			self.visbutton(QuitButton)
+
+			for count, player in enumerate([player for player in self.gamestate.players if not player.isdealer]):
+				self.vistext(Text((400,30*count), globalvars.StdFont,16,globalvars.BLACK),"{0} scored {1}".format(player.name, player.score))
+			self.visbutton(ExitButton)
 			self.update(globalvars.GameSpeed)
 
 
