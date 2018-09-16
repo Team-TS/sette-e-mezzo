@@ -36,6 +36,7 @@ loadCardImages()
 STATE_KILL = 0
 STATE_MENU = 1
 STATE_GAME = 2
+STATE_POST = 3
 
 state = STATE_MENU
 
@@ -45,6 +46,10 @@ def inMainMenuState():
 
 def inGameState():
     if state == STATE_GAME:
+        return True
+
+def inPostgameState():
+    if state == STATE_POST:
         return True
 
 def getAppState():
@@ -57,3 +62,7 @@ def setMenuState():
 def setGameState():
     global state
     state = STATE_GAME
+
+def setPostgameState():
+    global state
+    state = STATE_POST
