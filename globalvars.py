@@ -24,6 +24,7 @@ playerimg = image.load(path.join('images', 'avatar.png'))
 facedownimg = image.load(path.join('images', 'cards', 'cardback.png'))
 cardvalues = [i.split(",") for i in open("values.txt").read().split("\n")]
 cardimages = {}
+botnames = ["Terry", "Hannah", "Steve", "Mark", "James", "Jed", "Rachael", "Brian", "Chadwick", "Wolfgang"]
 
 def loadCardImages():
     for card in cardvalues:

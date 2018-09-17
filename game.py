@@ -14,9 +14,10 @@ class GameState:
 		self.waitforplayer = False
 		self.tick = 0
 		self.dealdeck = Deck("Dealers Deck")
+		self.botnames = globalvars.botnames.copy()
 		if bots:
 			while bots > 0:
-				TheBot = BotPlayer()
+				TheBot = BotPlayer(self.botnames)
 				self.players.append(TheBot)
 				bots -= 1
 
@@ -201,6 +202,7 @@ class Player:
 		#gamestate.removePlayer(self)
 		return
 
+
 	def checkWinCondition(self):
 		score = sum([float(card.value) for card in self.getCards()])
 		if score == 7.5:
@@ -215,15 +217,14 @@ class Player:
 		return [card for card in self.deck.cards if card.faceup == False]
 
 class BotPlayer(Player):
-	botnames = ["Terry", "Hannah", "Steve", "Mark", "James", "Jed", "Rachael", "Brian", "Chadwick", "Wolfgang"]
 	botrisks = [3, 5, 7, 10, 15, 20, 30, 40, 50, 60]
-	def __init__(self, name = None):
+	def __init__(self,botnames, name = None):
 		super().__init__("Bot")
 		if name:
 			self.name = name
 		else:
-			self.name = choice(self.botnames)
-			self.botnames.remove(self.name)
+			self.name = choice(botnames)
+			botnames.remove(self.name)
 			print("No name provided for bot: selecting {0}".format(self.name))
 		self.risk = choice(self.botrisks)
 		self.avatar = pygame.image.load("images/avatar.png")
