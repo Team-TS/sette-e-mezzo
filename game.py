@@ -15,15 +15,16 @@ class GameState:
 		self.tick = 0
 		self.dealdeck = Deck("Dealers Deck")
 		self.botnames = globalvars.botnames.copy()
+		self.gamelog = []
 		if bots:
 			while bots > 0:
-				TheBot = BotPlayer(self.botnames)
+				TheBot = BotPlayer(self.botnames, self)
 				self.players.append(TheBot)
 				bots -= 1
 
 		if len(self.players) < 2:
 			""" We can't play alone"""
-			enemy = BotPlayer(choice(["Mark", "Emily", "Steve", "Amy"]))
+			enemy = BotPlayer(choice(["Mark", "Emily", "Steve", "Amy"]), self)
 			self.dealer = enemy
 			self.players.append(enemy)
 		else:
@@ -31,6 +32,8 @@ class GameState:
 			self.dealer = dealer
 			dealer.isdealer = True
 			dealer.playing = False 
+
+		self.logGame("Setting up game.")
 
 	def fire(self):
 		"""One iteration of the game ticker"""
@@ -85,10 +88,12 @@ class GameState:
 			if not len(self.dealdeck.cards): # temporary solution 
 				self.endGame(True)
 				print("Out of cards, reseting game")
+				self.logGame("Dealer has no cards left.")
 				return
 			dealtcard = self.dealdeck.draw_card()
 			if player.isme:
 				dealtcard.setFaceUp()
+			self.logGame("Dealer {0} dealt {1} to {2}".format(self.dealer.name, dealtcard.name, player.name))
 			print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, dealtcard.name, player.name))
 			player.receiveCard(dealtcard)
 			
@@ -99,6 +104,7 @@ class GameState:
 		if not player.isbust or not player.isstay:
 			card = self.dealdeck.draw_card()
 			card.setFaceUp()
+			self.logGame("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
 			print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
 			player.receiveCard(card)
 	
@@ -109,6 +115,7 @@ class GameState:
 
 	def startGame(self):
 		"""Starts the game"""
+		self.logGame("Game starting...")
 		self.isrunning = True
 
 	def endGame(self, resetdealer = False, reset = True):
@@ -135,12 +142,14 @@ class GameState:
 				facedowns.append(card)
 		return facedowns
 
+	def logGame(self, logentry):
+		self.gamelog.append(str(logentry))
 
 
 class Player:
 	"""Class for an individual player, expandable for adding AI later, attibs are: name (str), deck (Deck obj), score (num)"""
 
-	def __init__(self, name, dealer = False):
+	def __init__(self, name, gamestate = None, dealer = False):
 		self.name = name
 		self.score = 0
 		self.playing = True
@@ -149,12 +158,16 @@ class Player:
 		self.isme = False
 		self.cardarea = None
 		self.loc = None
+		self.gameplaying = None # Store the gamestate here in which the player is in.
 		if not dealer:
 			self.deck = Deck("My Deck", False)
 			self.isdealer = False
 		else:
 			self.deck = Deck("Dealer's deck")
 			self.isdealer = True
+
+	def setGamestate(self, gamestate):
+		self.gameplaying = gamestate
 	
 	def action(self, gamestate):
 		return
@@ -190,6 +203,7 @@ class Player:
 		print(self.name + " stayed.")
 		self.isstay = True
 		self.playing = False
+		gamestate.logGame("{0} stayed.".format(self.name))
 		return
 
 	def bust(self, gamestate):
@@ -199,6 +213,7 @@ class Player:
 				card.setFaceUp()
 		self.playing = False
 		self.isbust = True
+		gamestate.logGame("{0} went bust!".format(self.name))
 		#gamestate.removePlayer(self)
 		return
 
@@ -218,8 +233,8 @@ class Player:
 
 class BotPlayer(Player):
 	botrisks = [3, 5, 7, 10, 15, 20, 30, 40, 50, 60]
-	def __init__(self,botnames, name = None):
-		super().__init__("Bot")
+	def __init__(self,botnames, gamestate = None, name = None):
+		super().__init__("Bot", gamestate)
 		if name:
 			self.name = name
 		else:
@@ -260,7 +275,6 @@ class BotPlayer(Player):
 			return
 
 		# So we didn't want to draw in either case. Let's pass instead.
-
 		return self.stay(gamestate)
 		
 	def win(self, gamestate):

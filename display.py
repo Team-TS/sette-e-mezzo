@@ -4,6 +4,7 @@ import globalvars
 from game import *
 import math
 import sys
+import text as ptxt
 
 
 class GameInstance:
@@ -26,7 +27,7 @@ class GameInstance:
 		"""Closes the application"""
 		globalvars.state = globalvars.STATE_KILL
 		pygame.quit()
-		sys.exit()
+		sys.exit(0)
 
 
 	def vistext(self,TextObj,txt,colour = False):
@@ -80,6 +81,7 @@ class GameInstance:
 		my_player = Player("My Name")
 		my_player.isme = True
 		self.gamestate = GameState([my_player], numbots)
+		my_player.gameplaying = self.gamestate
 		self.gamestate.startGame()
 		playarea = PlayArea(self.gamestate.players, self)
 		ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
@@ -125,12 +127,12 @@ class GameInstance:
 			y_offset = 110
 			for player in self.gamestate.players:
 				loc = (player.loc["x"], player.loc["y"] + y_offset)
-				text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
+				text = Text(loc, globalvars.StdFont,16,globalvars.WHITE)
 				self.vistext(text, player.name)
 
 			# Dealer
 			loc = (self.gamestate.dealer.loc["x"], self.gamestate.dealer.loc["y"] + y_offset)
-			text = Text(loc, globalvars.StdFont,16,globalvars.BLACK)
+			text = Text(loc, globalvars.StdFont,16,globalvars.WHITE)
 			self.vistext(text, self.gamestate.dealer.name + " the dealer")
 
 			# player status
@@ -145,6 +147,25 @@ class GameInstance:
 					text = Text(loc, globalvars.StdFont,16,globalvars.ORANGE)
 					self.vistext(text, "Stay")
 
+			# Show gamelog
+			log = self.gamestate.gamelog
+			start = len(log) - 15
+			if start < 0:
+				start = 0
+			x = 724
+			y = 20
+			for item in log[start:]:
+				loc = (x,y)
+				strings = ptxt.trimOnSpace(item, 25)
+				line = 1
+				for logline in strings:
+					if line > 1:
+						y = y + 14
+						loc = (x + 20 , y)
+					text = Text(loc, globalvars.StdFont,12,globalvars.BLACK)
+					self.vistext(text, logline)
+					line = line + 1
+				y = y + 14
 
 			self.update(globalvars.GameSpeed)
 
