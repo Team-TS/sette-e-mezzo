@@ -156,13 +156,13 @@ class GameInstance:
 			y = 20
 			for item in log[start:]:
 				loc = (x,y)
-				strings = ptxt.trimOnSpace(item, 25)
+				strings = ptxt.trimOnSpace(item, 55)
 				line = 1
 				for logline in strings:
 					if line > 1:
 						y = y + 14
 						loc = (x + 20 , y)
-					text = Text(loc, globalvars.StdFont,12,globalvars.BLACK)
+					text = Text(loc, globalvars.StdFont,12,globalvars.WHITE)
 					self.vistext(text, logline)
 					line = line + 1
 				y = y + 14
