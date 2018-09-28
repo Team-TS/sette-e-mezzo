@@ -7,15 +7,19 @@ class GameState:
 	"""Class for the state of a game, keeps track of players involved, dealer etc. Pass a list of players as argument."""
 	name = "GameState"
 
-	def __init__(self, players, bots = 0):
-		self.players = players
+	def __init__(self):
+		self.players = []
+		self.my_player = None
 		self.isrunning = False
 		self.dealer = None
 		self.waitforplayer = False
 		self.tick = 0
-		self.dealdeck = Deck("Dealers Deck")
 		self.botnames = globalvars.botnames.copy()
 		self.gamelog = []
+		self.logGame("Setting up game.")
+
+	def setupPlayers(self,player_name,bots = 0):
+		# setup opponents 
 		if bots:
 			while bots > 0:
 				TheBot = BotPlayer(self.botnames, self)
@@ -28,12 +32,16 @@ class GameState:
 			self.dealer = enemy
 			self.players.append(enemy)
 		else:
-			dealer = choice(players)
+			dealer = choice(self.players)
+			dealer.makeDealer()
 			self.dealer = dealer
-			dealer.isdealer = True
-			dealer.playing = False 
 
-		self.logGame("Setting up game.")
+		# setup your player (currently player cannot be dealer)
+		self.my_player = Player(player_name)
+		self.my_player.isme = True
+		self.players.append(self.my_player)
+
+		self.logGame("Setting up players.")
 
 	def fire(self):
 		"""One iteration of the game ticker"""
@@ -85,12 +93,7 @@ class GameState:
 		for player in self.players:
 			if player.isdealer:
 				continue
-			if not len(self.dealdeck.cards): # temporary solution 
-				self.endGame(True)
-				print("Out of cards, reseting game")
-				self.logGame("Dealer has no cards left.")
-				return
-			dealtcard = self.dealdeck.draw_card()
+			dealtcard = self.dealer.deck.draw_card()
 			if player.isme:
 				dealtcard.setFaceUp()
 			self.logGame("Dealer {0} dealt {1} to {2}".format(self.dealer.name, dealtcard.name, player.name))
@@ -102,7 +105,7 @@ class GameState:
 	def dealToPlayer(self, player):
 		"""The dealer deals a card to the player face up"""
 		if not player.isbust or not player.isstay:
-			card = self.dealdeck.draw_card()
+			card = self.dealer.deck.draw_card()
 			card.setFaceUp()
 			self.logGame("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
 			print("Dealer {0} dealt {1} to {2}".format(self.dealer.name, card.name, player.name))
@@ -118,14 +121,14 @@ class GameState:
 		self.logGame("Game starting...")
 		self.isrunning = True
 
-	def endGame(self, resetdealer = False, reset = True):
-		"""Ends the game and resets non dealer players"""
-		if reset:
-			for player in self.players:
+ 
+	def resetGame(self, resetdealer = True):
+		"""Ends the game and resets dealer/players"""
+		for player in self.players:
+			if not player.isdealer:
 				player.resetPlayer()
-
-			if resetdealer:
-				self.dealer.resetPlayer()
+			elif resetdealer:
+				player.resetPlayer()
 
 		self.isrunning = False
 
@@ -165,6 +168,12 @@ class Player:
 		else:
 			self.deck = Deck("Dealer's deck")
 			self.isdealer = True
+			self.playing  = False
+
+	def makeDealer(self):
+		self.deck = Deck("Dealer's deck")
+		self.isdealer = True
+		self.playing = False
 
 	def setGamestate(self, gamestate):
 		self.gameplaying = gamestate
@@ -194,10 +203,15 @@ class Player:
 
 	def resetPlayer(self):
 		"""resets a players score and deck"""
+		self.score = 0
+		self.isbust = False
+		self.isstay = False
 		if not self.isdealer:
 			self.deck = Deck("My Deck", False)
+			self.playing = True
 		else:
 			self.deck = Deck("Dealer's deck")
+			self.playing = False
 
 	def stay(self, gamestate):
 		print(self.name + " stayed.")

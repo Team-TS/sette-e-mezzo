@@ -13,6 +13,7 @@ PURPLE   = (255,   0, 255)
 CYAN     = (  0, 255, 255)
 BLACK    = (  0,   0,   0)
 
+Name             =  "Sette e mezzo"
 StdFont          =  "Archivo-SemiBold"
 GameSpeed        =  60
 WindowWidth      =  1024
