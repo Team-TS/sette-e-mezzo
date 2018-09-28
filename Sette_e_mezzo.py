@@ -4,9 +4,8 @@ from game import *
 from display import *
 from globalvars import *
 
-# constants (CamelCase)
-Name             =  "Sette e mezzo"
-Game             =  GameInstance(Name,WindowWidth,WindowHeight)
+
+
 
 # game states and player
 run = True
@@ -17,6 +16,7 @@ while run:
 
         while inMainMenuState():
                 print("Menu")
+                Game = GameInstance(Name,WindowWidth,WindowHeight)
                 menu = Game.showMenu()
                 if menu:
                         if menu == 1:
@@ -26,7 +26,7 @@ while run:
 
         while inGameState():
                 print("Game")
-                selection = Game.runGame(7)
+                selection = Game.runGame()
                 if selection:
                         if selection == 1:
                                 setMenuState()
@@ -35,5 +35,9 @@ while run:
 
         while inPostgameState():
                 print("Postgame")
-                Game.showPostgame()
-                setMenuState()
+                progress = Game.showPostgame()
+                if progress:
+                        if progress == 1:
+                                setMenuState()
+                        if progress == 2:
+                                setGameState()

@@ -17,7 +17,9 @@ class GameInstance:
 		self.display = pygame.display.set_mode((w,h))
 		self.fps     = pygame.time.Clock()
 		self.background = pygame.image.load("images/testbg.png")
-		self.gamestate = None 
+		self.gamestate = GameState() 
+		
+
 
 	def events(self):
 		"""returns a list of pygame events"""
@@ -73,15 +75,13 @@ class GameInstance:
 					self.quit()
 					return 1
 				if PlayButton.check(event):
+					self.gamestate.setupPlayers("Merlin",7)
 					return 2
 					
-	def runGame(self, numbots):
+	def runGame(self):
 
 		running = True
-		my_player = Player("My Name")
-		my_player.isme = True
-		self.gamestate = GameState([my_player], numbots)
-		my_player.gameplaying = self.gamestate
+		self.gamestate.my_player.gameplaying = self.gamestate
 		self.gamestate.startGame()
 		playarea = PlayArea(self.gamestate.players, self)
 		ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
@@ -101,12 +101,12 @@ class GameInstance:
 			self.visbutton(ExitButton)
 
 			# check your players score
-			if my_player.playing:
-				if my_player.checkLoseCondition():
-					my_player.bust(self.gamestate)
+			if self.gamestate.my_player.playing:
+				if self.gamestate.my_player.checkLoseCondition():
+					self.gamestate.my_player.bust(self.gamestate)
 
 			# correct options
-			if not my_player.playing:
+			if not self.gamestate.my_player.playing:
 				StayButton.disable()
 				DrawButton.disable()
 				ResolveButton.enable()
@@ -176,29 +176,28 @@ class GameInstance:
 					self.quit()
 					return 0 
 				if DrawButton.check(event):
-					self.gamestate.dealToPlayer(my_player)
+					self.gamestate.dealToPlayer(self.gamestate.my_player)
 					self.gamestate.waitforplayer = False
 				if StayButton.check(event):
 					DrawButton.disable()
-					my_player.stay(self.gamestate)
+					self.gamestate.my_player.stay(self.gamestate)
 					self.gamestate.waitforplayer = False
 				if ResolveButton.check(event):
 					# end game when all players done and all cards revealed
 					if all([not player.playing for player in self.gamestate.players]):
 						if not self.gamestate.getFaceDowns():
-							self.gamestate.endGame(reset = False)
 							return 2	
 						else:
 							for card in self.gamestate.getFaceDowns():
 								card.setFaceUp()
 					self.gamestate.waitforplayer = False
 				if ExitButton.check(event):
-					self.gamestate.endGame()
 					return 1
 
 	def showPostgame(self):
 
 		ExitButton = Button((30, 15), globalvars.StdFont, 30, globalvars.GREEN, "Quit", globalvars.YELLOW, globalvars.CYAN)
+		NextButton = Button((800, 700), globalvars.StdFont, 30, globalvars.GREEN, "Next Hand", globalvars.YELLOW, globalvars.CYAN)
 		self.gamestate.updateScore()
 
 		while True:
@@ -209,13 +208,18 @@ class GameInstance:
 					self.quit()
 					return 0
 				if ExitButton.check(event):
-					return
+					return 1
+				if NextButton.check(event):
+					self.gamestate.resetGame()
+					return 2
+
 
 			self.display.fill((255, 255, 255))
 
 			for count, player in enumerate([player for player in self.gamestate.players if not player.isdealer]):
 				self.vistext(Text((400,30*count), globalvars.StdFont,16,globalvars.BLACK),"{0} scored {1}".format(player.name, player.score))
 			self.visbutton(ExitButton)
+			self.visbutton(NextButton)
 			self.update(globalvars.GameSpeed)
 
 
@@ -305,16 +309,17 @@ class PlayerArea():
 		self.loc = loc
 
 	def render(self, game):
-		count = 1
-		for card in self.player.getCards():
-			img = card.img
-			x = self.loc["x"] + (count * 30)
-			y = self.loc["y"]
-			cardloc = (x, y)
-			if not card.faceup:
-				img = globalvars.facedownimg
-				
-			game.vissurf(img, cardloc)
-			count += 1
+		if not self.player.isdealer:
+			count = 1
+			for card in self.player.getCards():
+				img = card.img
+				x = self.loc["x"] + (count * 30)
+				y = self.loc["y"]
+				cardloc = (x, y)
+				if not card.faceup:
+					img = globalvars.facedownimg
+					
+				game.vissurf(img, cardloc)
+				count += 1
 
 		return
