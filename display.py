@@ -63,20 +63,25 @@ class GameInstance:
 
 		PlayButton = Button((497,349),globalvars.StdFont,30,globalvars.GREEN,"Play",globalvars.YELLOW,globalvars.CYAN)
 		QuitButton = Button((497,429), globalvars.StdFont,30, globalvars.BLACK, "Quit", globalvars.BLUE, globalvars.CYAN)
+		NameInput  = TextBox((100,100),globalvars.StdFont,30,globalvars.BLACK,globalvars.YELLOW)
 
 		while True:
 			self.display.fill((255, 255, 255))
 			self.visbutton(QuitButton)
 			self.visbutton(PlayButton)
-			self.update(globalvars.GameSpeed)
 
 			for event in self.events():
 				if event.type == pygame.QUIT or QuitButton.check(event):
 					self.quit()
 					return 1
 				if PlayButton.check(event):
-					self.gamestate.setupPlayers("Merlin",7)
+					self.gamestate.setupPlayers(NameInput.input_string,7)
 					return 2
+				NameInput.check(event)
+
+			NameInput.update()
+			self.vissurf(NameInput.surface,NameInput.xy)
+			self.update(globalvars.GameSpeed)
 					
 	def runGame(self):
 
@@ -323,3 +328,71 @@ class PlayerArea():
 				count += 1
 
 		return
+
+class TextBox(Text):
+
+	def __init__(self,xy,font,size,colour,background = False):
+		Text.__init__(self,xy,font,size,colour,background)
+		self.surface = pygame.Surface(xy)
+		self.cursor_surface = pygame.Surface((int(size/20+1),size))
+		self.cursor_surface.fill(globalvars.BLACK)
+		self.cursor_visible = True 
+		self.cursor_interval  = 100
+		self.cursor_counter = 0
+		self.input_string = "Your name here.."
+		self.cursor_position = len(self.input_string)
+		self.complete = False
+
+	def check(self, event):
+		if event.type == pygame.KEYDOWN and not self.complete:
+			self.cursor_visible = True 
+
+			if event.key == K_BACKSPACE: 
+				self.input_string = self.input_string[:max(self.cursor_position - 1, 0)] + self.input_string[self.cursor_position:]
+                # Subtract one from cursor_pos, but do not go below zero:
+				self.cursor_position = max(self.cursor_position - 1, 0)
+
+			elif event.key == K_DELETE:
+				self.input_string = self.input_string[:self.cursor_position] + self.input_string[self.cursor_position + 1:]
+
+			elif event.key == K_RETURN:
+				self.complete = True
+
+			elif event.key == K_RIGHT:
+                # Add one to cursor_pos, but do not exceed len(input_string)
+				self.cursor_position = min(self.cursor_position + 1, len(self.input_string))
+
+			elif event.key == K_LEFT:
+                # Subtract one from cursor_pos, but do not go below zero:
+				self.cursor_position = max(self.cursor_position - 1, 0)
+
+			elif event.key == K_END:
+				self.cursor_position = len(self.input_string)
+
+			elif event.key == K_HOME:
+				self.cursor_position = 0
+
+			else:
+                # If no other key is pressed, add unicode of key to input_string
+				self.input_string = self.input_string[:self.cursor_position] + event.unicode + self.input_string[self.cursor_position:]
+				self.cursor_position += len(event.unicode) # Some are empty, e.g. K_UP
+
+	def update(self):
+
+		# Rerender text surface:
+		self.surface = self.font.render(self.input_string, True, self.colour, self.background)
+
+		if not self.complete:
+	        # Update self.cursor_visible
+			self.cursor_counter += 10
+			if self.cursor_counter >= self.cursor_interval:
+				self.cursor_counter %= self.cursor_interval
+				self.cursor_visible = not self.cursor_visible
+
+			if self.cursor_visible:
+				self.cursor_y_pos = self.font.size(self.input_string[:self.cursor_position])[0]
+				# Without this, the cursor is invisible when self.cursor_position > 0:
+				if self.cursor_position > 0:
+					self.cursor_y_pos -= self.cursor_surface.get_width()
+				self.surface.blit(self.cursor_surface, (self.cursor_y_pos, 0))
+
